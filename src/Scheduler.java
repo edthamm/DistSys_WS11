@@ -73,7 +73,7 @@ public class Scheduler extends AbstractServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        catch(NumberFormatException e){
+          catch(NumberFormatException e){
             System.out.print(usage + "All values must be integers.\n");
             e.printStackTrace();
             System.exit(1);
@@ -162,7 +162,7 @@ public class Scheduler extends AbstractServer {
         public CWorker(DatagramPacket in) {
             this.in = in;
         }
-        
+        //set timer in gte call sr to update gt status on expire and reset with s alive in worker
     }
     
     

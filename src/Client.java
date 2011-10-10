@@ -216,7 +216,7 @@ public class Client {
      * Postconditions: engine assignment request is sent
      */
     private void requestEngine(int id){
-        Task t = tget(id);
+        Task t = getTask(id);
         
         if(t == null){
             System.out.print("Task not prepared.\n");
@@ -242,14 +242,14 @@ public class Client {
         PrintWriter tout = null;
         DataOutputStream dout = null;
         
-        Task t = tget(id);
+        Task t = getTask(id);
         if(t == null){
             System.out.print("No Task with id: "+id+" prepared.\n");
             return;
         }
         if(t.status != TASKSTATE.assigned){
             System.out.print("Status of task is "+t.status.toString()+" but must be assigned for execute to work.\n");
-            //TODO ask about this
+            return;
         }
         
         try {
@@ -280,7 +280,9 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        tout.println(script);        
+        tout.println(script);
+        tout.flush();
+        System.out.print("Transmitted Task!\n");
     }
     
     
@@ -305,7 +307,7 @@ public class Client {
      * Postconditions: Task info printed to std out
      */
     private void info(int id){
-        Task t = tget(id);
+        Task t = getTask(id);
         if(t == null){
             System.out.print("No such Task.\n");
             return;
@@ -328,8 +330,8 @@ public class Client {
         System.out.print("Exiting on request. Good Bye!\n");
         e.shutdownNow();
         closeSchedulerConnection();
-        //TODO end all listen threads
-        System.exit(0);
+        //TODO end all listen threads tecclose
+        System.exit(0);//for testing delete to see if clean exit
     }
     
     
@@ -341,7 +343,7 @@ public class Client {
      * Preconditions: none
      * Postconditions: returns task if task with given id exists, null otherwise
      */
-    private Task tget(int id){
+    private Task getTask(int id){
         Task t;
         try{
             t = taskList.get(id - 1);
@@ -407,10 +409,11 @@ public class Client {
                 }
                 if(rcv.contains("Assigned engine:")){
                     String rs[] = rcv.split(" ");
-                    taskList.get(Integer.parseInt(rs[7])-1).port = Integer.parseInt(rs[4]);
-                    taskList.get(Integer.parseInt(rs[7])-1).taskEngine = rs[2];
-                    taskList.get(Integer.parseInt(rs[7])-1).status = TASKSTATE.assigned;
-                    System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[4]+"\n");
+                    System.out.print(rs[6]+"\n");
+                    taskList.get(Integer.parseInt(rs[6])-1).port = Integer.parseInt(rs[3]);
+                    taskList.get(Integer.parseInt(rs[6])-1).taskEngine = rs[2];
+                    taskList.get(Integer.parseInt(rs[6])-1).status = TASKSTATE.assigned;
+                    System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[3]+"\n");
                     break;
                 }
                 if(rcv.contains("Started execution")){
