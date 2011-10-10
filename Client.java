@@ -1,0 +1,461 @@
+/**
+ * @author Eduard Thamm
+ * @matnr 0525087
+ * @brief Client program for DSLab.
+ * @detail Simple Client for the DsLab performs various activities like logging in. requesting
+ * resources and some things more.
+ */
+
+import java.io.*;
+import java.net.*;
+import java.util.LinkedList;
+import java.util.concurrent.*;
+
+public class Client {
+    
+    private int port;
+    private String server;
+    private Socket ssock;
+    private PrintWriter sout;
+    private BufferedReader sin;
+    private File tdir;
+    private LinkedList<Task> taskList = new LinkedList<Task>(); 
+    private ExecutorService e = Executors.newCachedThreadPool();
+
+    /*
+     * Preconditions: srv, p not null
+     * Postconditions: new Client is created server and port are set
+     */
+    public Client(String srv, int p, String dir){
+        port = p;
+        server = srv;
+        tdir = new File(dir);
+        if (!tdir.exists()){
+            System.out.print(tdir.getName()+"does not exists.\n");
+            System.exit(1);
+        }
+        if(!tdir.isDirectory()){
+            System.out.print(tdir.getName()+"is not a directory.\n");
+            System.exit(1);
+        }
+    }
+    
+    /*
+     * Preconditions: none
+     * Postconditions: program execution started
+     */
+    public void run() throws IOException{
+        BufferedReader stdin = new BufferedReader( new InputStreamReader(System.in));
+        String userin;
+        
+        while((userin = stdin.readLine()) != null){
+            String usersp[] = userin.split(" ");
+            try{
+                checkAction(usersp);
+            }
+            catch(NumberFormatException e){
+                System.out.print("You entered a non integer value. Please enter an Integer value.\n");
+            }
+        }
+        return;
+    
+    }
+    
+    /*
+     * Preconditions: user input received
+     * Postconditions: user input processed and handling function called accordingly
+     */
+    private void checkAction(String[] in) throws NumberFormatException{
+        
+        if(in[0].contentEquals("!login")){
+            if(in.length != 3){
+                System.out.print("Invalid parameters. Usage: !login username password.\n");
+                return;
+            }
+            login(in[1],in[2]);
+            return; 
+        }
+        if(in[0].contentEquals("!logout")){
+            logout();
+            return; 
+        }        
+        if(in[0].contentEquals("!list")){
+            list();
+            return; 
+        }
+        if(in[0].contentEquals("!prepare")){
+            if(in.length != 3){
+               System.out.print("Invalid parameters. Usage: !prepare taskname tasktype.\n");
+               return;
+            }
+            prepare(in[1],in[2]);
+           return; 
+        }
+        if(in[0].contentEquals("!requestEngine")){
+            if(in.length != 2){
+                System.out.print("Invalid parameters. Usage: !requestEngine taskid.\n");
+                return;
+            }
+            requestEngine(Integer.parseInt(in[1]));
+            return; 
+        }
+        if(in[0].contentEquals("!executeTask")){
+            if(in.length != 3){
+                System.out.print("Invalid parameters. Usage: !executeTask taskid startscript.\n");
+                return;
+            } 
+            executeTask(Integer.parseInt(in[1]),in[2]);
+           return; 
+        }
+        if(in[0].contentEquals("!info")){
+            if(in.length != 2){
+                System.out.print("Invalid parameters. Usage: !info taskid.\n");
+                return;
+            }
+            info(Integer.parseInt(in[1]));
+            return; 
+        }
+        if(in[0].contentEquals("!exit")){
+            exit(); 
+            //no return needed sys.exit()
+        }
+        else{
+            System.out.print("Command not recognised.\n");
+            return;
+        }
+    }
+    
+    
+    // Scheduler Connection up/down
+    
+    
+    
+    /*
+     * Preconditions: user, pass not null
+     * Postconditions: Connection is build, reading and writing lines are opened. User is logged in to server, or error is thrown.
+     */
+    private void login(String user, String pass){
+        
+        try {
+            ssock = new Socket(server, port);
+            sout = new PrintWriter(ssock.getOutputStream(), true);
+            sin = new BufferedReader(new InputStreamReader(ssock.getInputStream()));
+        } catch (UnknownHostException e) {
+            System.out.print("Login: Unknown Host, check server name and port.\n");
+            e.printStackTrace();
+            System.exit(1);
+        } catch (IOException e) {
+            System.out.print("Login: Could not get I/O for "+server+" \n");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        
+        sout.println("!login "+user+" "+pass);
+        e.execute(new Listener(ssock,sin));
+    }
+    
+    /*
+     * Preconditions: logged in
+     * Postconditions: logged out
+     */
+    private void logout(){
+        if(sout == null){
+            System.out.print("Must be logged in.\n");
+        }
+        else{
+            sout.println("!logout");
+        }
+        //working like this would leak in c. will it leak in java?
+    }
+    
+    
+    // Task life cycle
+    
+    
+    /*
+     * Preconditions: none
+     * Postconditions: new task with unique taskid prepared
+     */
+    private void prepare(String task, String type){
+        TYPE typ = null;
+        if(type.contentEquals("LOW")){
+            typ = TYPE.LOW;
+            
+        }
+        else{
+            if(type.contentEquals("MIDDLE")){
+                typ = TYPE.MIDDLE;
+            }
+            else{
+                if(type.contentEquals("HIGH")){
+                    typ = TYPE.HIGH;
+                }
+        
+                else{
+                    System.out.print("Invalid type. Use [LOW|MIDDLE|HIGH].\n");
+                    return;
+                }
+            }
+        }
+        
+        File f = new File(tdir.getAbsolutePath()+task);
+        if(!f.exists()){
+            System.out.print("No such file exists: "+f.getAbsolutePath()+"\n");
+            return;
+        }
+        
+        Task t = new Task(task,typ);
+        t.status = TASKSTATE.prepared;
+        taskList.add(t.id - 1, t);
+        System.out.print("Task wit id "+t.id+" prepared.\n");
+        return;
+    }
+    
+    /*
+     * Preconditions: none
+     * Postconditions: engine assignment request is sent
+     */
+    private void requestEngine(int id){
+        Task t = tget(id);
+        
+        if(t == null){
+            System.out.print("Task not prepared.\n");
+            return;
+        }
+        else{
+            if(sout == null){
+                System.out.print("Must be logged in.\n");
+                return;
+            }
+            sout.println("!requestEngine "+t.id+" "+t.type.toString());
+            return;
+        }
+        
+    }
+    
+    /*
+     * Preconditions: logged in, taskEngine assigned to task
+     * Postconditions: task starts executing
+     */
+    private void executeTask(int id, String script){
+        Socket tsock;
+        BufferedReader tin;
+        PrintWriter tout;
+        
+        Task t = tget(id);
+        if(t == null){
+            System.out.print("No Task with id: "+id+" prepared.\n");
+            return;
+        }
+        if(t.status != TASKSTATE.assigned){
+            System.out.print("Status of task is "+t.status.toString()+" but must be assigned for execute to work.\n");
+            //TODO ask about this
+        }
+        
+        //TODO do execution 
+        //listening is already done
+        
+    }
+    
+    
+    // Local functions
+    
+    
+    /*
+     * Preconditions: none
+     * Postconditions: printed all files in task directory to stdout
+     */
+    private void list(){
+        String cont[] = tdir.list();
+        int i = 0;
+        while(i < cont.length){
+            System.out.print(cont[i]+"\n");
+            i++;
+       }
+    }
+
+    /*
+     * Preconditions: none
+     * Postconditions: Task info printed to std out
+     */
+    private void info(int id){
+        Task t = tget(id);
+        if(t == null){
+            System.out.print("No such Task.\n");
+            return;
+        }
+        else{
+            System.out.print("Task "+id+" ("+t.name+")\n"+
+                             "Type: "+t.type.toString()+"\n"+
+                             "Assigned engine: "+ t.taskEngine+":"+t.port+"\n"+
+                             "Status: "+t.status.toString()+"\n");
+            return;
+        }
+        
+    }
+    
+    /*
+     * Preconditions: none
+     * Postconditions: all open handles are released, program terminates
+     */
+    private void exit(){
+        System.out.print("Exiting on request. Good Bye!\n");
+        e.shutdownNow();
+        closeSchedulerConnection();
+        //TODO end all listen threads
+        System.exit(0);
+    }
+    
+    
+    // Assistance functions
+    
+    
+    
+    /*
+     * Preconditions: none
+     * Postconditions: returns task if task with given id exists, null otherwise
+     */
+    private Task tget(int id){
+        Task t;
+        try{
+            t = taskList.get(id - 1);
+        }
+        catch(IndexOutOfBoundsException e){
+            t = null;
+        }
+        return t;
+    }
+    
+    /*
+     * Preconditions: Logged in to Scheduler
+     * Postconditions: Scheduler connection terminated, variables set to null
+     */
+    private void closeSchedulerConnection(){
+        try{
+            sin.close();
+            sout.close();
+            ssock.close();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        sin = null;
+        sout = null;
+        ssock = null;
+        return;
+    }
+  
+    
+    
+    //  Nested Classes and Main
+    
+    
+    private class Listener extends Thread{
+        
+        private Socket lsock;
+        private BufferedReader lin;
+        
+        public Listener(Socket s, BufferedReader i){
+            lsock = s;
+            lin = i;
+        }
+        
+        /*
+         * Preconditions: sock,in not null 
+         * Postconditions: continuous listening for messages from server
+         */       
+        public void run(){
+            String rcv = "nothing recieved\n";
+            while(lsock.isConnected()){
+                try {
+                    rcv = lin.readLine();
+                } catch (IOException e) {
+                    System.out.print("Could not read from socket.\n");
+                    e.printStackTrace();
+                    System.exit(1);//this is not really clean maybe write a error exit method
+                }
+                if(rcv.contentEquals("Successfully logged out.") || rcv.contentEquals("Wrong company or password.")){
+                    System.out.print(rcv +"\n");
+                    closeSchedulerConnection();
+                    break;
+                }
+                if(rcv.contains("Assigned engine:")){
+                    String rs[] = rcv.split(" ");
+                    taskList.get(Integer.parseInt(rs[7])-1).port = Integer.parseInt(rs[4]);
+                    taskList.get(Integer.parseInt(rs[7])-1).taskEngine = rs[2];
+                    taskList.get(Integer.parseInt(rs[7])-1).status = TASKSTATE.assigned;
+                    System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[4]+"\n");
+                    break;
+                }
+                if(rcv.contains("Started execution")){
+                    String rs[] = rcv.split(" ");
+                    taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.executing;
+                    break;
+                }
+                if(rcv.contains("Finished Task")){
+                    String rs[] = rcv.split(" ");
+                    taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.finished;
+                    break;
+                }
+                System.out.print(rcv +"\n");
+            }
+            return;
+
+        }
+        
+        /*
+         * Preconditions: thread is running
+         * Postconditions: thread terminated
+         */
+        public void interrupt(){
+            try{
+                lsock.close();
+                lin.close();
+            }
+            catch(Exception e){
+                //do nothing about it you are going down forcefully
+            }
+            return;
+        }
+    }
+    
+    private static class Task{
+        public final int id;
+        public String name;
+        public TYPE type;
+        static int idCount = 0;
+        public int port = 0;
+        public String taskEngine = "none";
+        public TASKSTATE status;
+        
+        public Task(String n, TYPE t){
+            id = ++idCount;
+            name = n;
+            type = t;
+        }
+        
+    }
+    
+    public static void main (String args[]){
+        
+        final String usage = "DSLab Client usage: java Client.java schedulerHost schedulerTCPPort taskdir";
+        Client c;
+        //argument check
+        //TODO complete this
+        if(args.length != 3){
+            System.out.print(usage);
+            System.exit(1);
+        }
+        
+        
+        
+        c = new Client(args[0], Integer.parseInt(args[1]), args[2]);
+        try {
+            c.run();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+    }
+}
+//TODO login/logout and te connection termination protocol
