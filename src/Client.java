@@ -234,13 +234,13 @@ public class Client {
     }
     
     /*
-     * Preconditions: logged in, taskEngine assigned to task
+     * Preconditions: logged in, taskEngine assigned to task, task file still exists
      * Postconditions: task starts executing
      */
     private void executeTask(int id, String script){
         Socket tsock;
-        BufferedReader tin;
-        PrintWriter tout;
+        PrintWriter tout = null;
+        DataOutputStream dout = null;
         
         Task t = tget(id);
         if(t == null){
@@ -252,9 +252,35 @@ public class Client {
             //TODO ask about this
         }
         
-        //TODO do execution 
-        //listening is already done
+        try {
+            tsock = new Socket(t.taskEngine,t.port);
+            dout = new DataOutputStream(tsock.getOutputStream());
+            tout = new PrintWriter(tsock.getOutputStream());
+        } catch (UnknownHostException e) {
+            //TODO useful error msgs
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         
+        File f = new File(tdir.getAbsolutePath()+t.name);
+        byte[] ba = new byte[(int) f.length()];  //this is not great but it works
+        
+        //after connecting sending file starts immediately
+        //TODO see what happens if remote end hangs up do to not available and catch that
+        try {
+            FileInputStream fis = new FileInputStream(f);
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            bis.read(ba,0,ba.length);
+            dout.write(ba,0,ba.length);
+            dout.flush();
+        } catch (FileNotFoundException e) {
+            //TODO nice error msgs
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        tout.println(script);        
     }
     
     
