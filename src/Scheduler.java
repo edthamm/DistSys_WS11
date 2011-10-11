@@ -5,7 +5,9 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.*;
 
 
@@ -18,7 +20,7 @@ public class Scheduler extends AbstractServer {
     private int checkP;
     private DatagramSocket uSock;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
-    private LinkedList<GTEntry> GTs = new LinkedList<GTEntry>();//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
+    private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
     private ExecutorService contE = Executors.newCachedThreadPool();
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
@@ -38,6 +40,20 @@ public class Scheduler extends AbstractServer {
     public void inputListen(){
         InputListener i = new InputListener();
         i.run();        
+    }
+    
+    public void readCompanies(){
+        InputStream in = ClassLoader.getSystemResourceAsStream("company.properties");
+        if(in != null){
+            java.util.Properties companies = new java.util.Properties();
+            try {
+                companies.load(in);
+                
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
     
     public int schedule(){
@@ -144,7 +160,6 @@ public class Scheduler extends AbstractServer {
             } 
             
             while(true){
-                //TODO i dont get this, will this work ||
                 try {
                     uSock.receive(in);
                     contE.execute(new CWorker(in));
@@ -162,7 +177,7 @@ public class Scheduler extends AbstractServer {
         public CWorker(DatagramPacket in) {
             this.in = in;
         }
-        //set timer in gte call sr to update gt status on expire and reset with s alive in worker
+        //set timer in gte call sr to update gt status on expire and reset with is alive in worker
     }
     
     
@@ -219,6 +234,18 @@ public class Scheduler extends AbstractServer {
             this.minE = minE;
             this.maxE = maxE;
             this.load = load;            
+        }
+        
+        public void startTimer(){
+            
+        }
+        
+        public void stopTimer(){
+            
+        }
+        
+        public void resetTimer(){
+            
         }
         
         public String toString(){

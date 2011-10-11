@@ -265,6 +265,8 @@ public class Client {
         
         File f = new File(tdir.getAbsolutePath()+t.name);
         byte[] ba = new byte[(int) f.length()];  //this is not great but it works
+        tout.println(script);
+        tout.flush();
         
         //after connecting sending file starts immediately
         //TODO see what happens if remote end hangs up do to not available and catch that
@@ -280,8 +282,7 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        tout.println(script);
-        tout.flush();
+
         System.out.print("Transmitted Task!\n");
     }
     
@@ -469,18 +470,18 @@ public class Client {
         
         final String usage = "DSLab Client usage: java Client.java schedulerHost schedulerTCPPort taskdir";
         Client c;
-        //argument check
-        //TODO complete this
+        
         if(args.length != 3){
             System.out.print(usage);
-            System.exit(1);
+            System.exit(1); //return value
         }
         
-        
-        
-        c = new Client(args[0], Integer.parseInt(args[1]), args[2]);
-        try {
+        try{
+            c = new Client(args[0], Integer.parseInt(args[1]), args[2]);
             c.run();
+        } catch(NumberFormatException e){
+            System.out.print("Second argument must be an Integer value.\n");
+            System.exit(1);
         } catch (IOException e) {
             e.printStackTrace();
         }
