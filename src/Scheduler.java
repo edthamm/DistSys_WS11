@@ -82,6 +82,11 @@ public class Scheduler extends AbstractServer {
         return i;
     }
     
+    private void efficencyCheck(){
+        Timer time = new Timer();
+        time.scheduleAtFixedRate(new ECheck(), checkP, checkP);
+    }
+    
     public void exitRoutine(){
         contE.shutdownNow();
         uSock.close();
@@ -105,6 +110,7 @@ public class Scheduler extends AbstractServer {
             sched.inputListen();
             sched.control();
             sched.listen();
+            sched.efficencyCheck();
             
             
         } catch (IOException e) {
@@ -194,11 +200,29 @@ public class Scheduler extends AbstractServer {
     private class CWorker extends Thread{
         //One CWorker manages on GTE
         private DatagramPacket in;
-        //TODO logic
         public CWorker(DatagramPacket in) {
             this.in = in;
         }
-        //set timer in gte call sr to update gt status on expire and reset with is alive in worker
+        
+        public void run(){
+            for (GTEntry g : GTs){
+                if (g.ip == in.getAddress().toString()){
+                    g.resetTimer();
+                    return;
+                }
+            }
+            String inString = new String(in.getData(), 0, in.getLength());
+            String rcv[] = inString.split(" ");
+            try{
+                GTEntry g = new GTEntry(in.getAddress().toString(),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
+                GTs.add(g);
+                g.startTimer();
+            } catch(NumberFormatException e){
+                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString()+" \n");
+                if(DEBUG){e.printStackTrace();}
+            }
+            
+        }
     }
     
     
@@ -303,6 +327,14 @@ public class Scheduler extends AbstractServer {
         public String toString(){
             return(name+" ("+line.toString()+") LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
         }
+    }
+    
+    private class ECheck extends TimerTask{
+
+        public void run() {
+            //TODO work out a suspend algorithm
+        }
+        
     }
 
 }
