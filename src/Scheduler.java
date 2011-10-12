@@ -223,6 +223,8 @@ public class Scheduler extends AbstractServer {
             }
             
         }
+        
+        
     }
     
     
@@ -332,9 +334,52 @@ public class Scheduler extends AbstractServer {
     private class ECheck extends TimerTask{
 
         public void run() {
-            //TODO work out a suspend algorithm
+            int highUsers = 0;
+            int emptyRunners = 0;
+            int gtsUp = 0;
+            for (GTEntry g : GTs){
+                if(g.status == GTSTATUS.online){
+                    gtsUp++;
+                    if(g.load == 0){
+                        emptyRunners++;
+                    }
+                    if(g.load > 65){
+                        highUsers++;
+                    }
+                }
+            }
+            if((highUsers == gtsUp && gtsUp < maxT && gtsUp < GTs.size()) || (gtsUp < minT && gtsUp < GTs.size())){
+                // no engine <66 load up and less than max engines active and inactive engines exist
+                // active smaller min and suspended available
+                GTEntry minEngine = GTs.get(0);
+                for (GTEntry g :GTs){
+                    if(minEngine.minE < g.minE && g.status == GTSTATUS.suspended){
+                        minEngine = g;
+                    }
+                }
+                activate(minEngine);
+                //worst case first engine and that is offline well s happens
+                //TODO check min == max
+            }
+            if(emptyRunners > 1 && gtsUp > minT){
+                GTEntry maxEngine = GTs.get(0);
+                for (GTEntry g :GTs){
+                    if(maxEngine.maxE > g.maxE && g.status == GTSTATUS.online){
+                        maxEngine = g;
+                    }
+                }
+                suspend(maxEngine);
+            }
+            
         }
         
+        private void suspend(GTEntry g){
+            
+        }
+        
+        private void activate(GTEntry g){
+            
+        }
     }
 
 }
