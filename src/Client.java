@@ -21,6 +21,7 @@ public class Client {
     private File tdir;
     private LinkedList<Task> taskList = new LinkedList<Task>(); 
     private ExecutorService e = Executors.newCachedThreadPool();
+    private static final boolean DEBUG = true;
 
     /*
      * Preconditions: srv, p not null
@@ -142,11 +143,11 @@ public class Client {
             sin = new BufferedReader(new InputStreamReader(ssock.getInputStream()));
         } catch (UnknownHostException e) {
             System.out.print("Login: Unknown Host, check server name and port.\n");
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
             System.exit(1);
         } catch (IOException e) {
             System.out.print("Login: Could not get I/O for "+server+" \n");
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
             System.exit(1);
         }
         
@@ -258,9 +259,9 @@ public class Client {
             tout = new PrintWriter(tsock.getOutputStream());
         } catch (UnknownHostException e) {
             //TODO useful error msgs
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         } catch (IOException e) {
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         }
         
         File f = new File(tdir.getAbsolutePath()+t.name);
@@ -278,9 +279,9 @@ public class Client {
             dout.flush();
         } catch (FileNotFoundException e) {
             //TODO nice error msgs
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         } catch (IOException e) {
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         }
 
         System.out.print("Transmitted Task!\n");
@@ -366,7 +367,7 @@ public class Client {
             ssock.close();
         }
         catch (Exception e){
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         }
         sin = null;
         sout = null;
@@ -400,7 +401,7 @@ public class Client {
                     rcv = lin.readLine();
                 } catch (IOException e) {
                     System.out.print("Could not read from socket.\n");
-                    e.printStackTrace();
+                    if(DEBUG){e.printStackTrace();}
                     System.exit(1);//this is not really clean maybe write a error exit method
                 }
                 if(rcv.contentEquals("Successfully logged out.") || rcv.contentEquals("Wrong company or password.")){
@@ -483,7 +484,7 @@ public class Client {
             System.out.print("Second argument must be an Integer value.\n");
             System.exit(1);
         } catch (IOException e) {
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         }
         
     }

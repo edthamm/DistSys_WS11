@@ -22,6 +22,7 @@ public class Scheduler extends AbstractServer {
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
     private ExecutorService contE = Executors.newCachedThreadPool();
+    private static final boolean DEBUG = true;
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
         port = tcpPort;
@@ -51,7 +52,7 @@ public class Scheduler extends AbstractServer {
                 
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                if(DEBUG){e.printStackTrace();}
             }
         }
     }
@@ -87,11 +88,11 @@ public class Scheduler extends AbstractServer {
             
             
         } catch (IOException e) {
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
         }
           catch(NumberFormatException e){
             System.out.print(usage + "All values must be integers.\n");
-            e.printStackTrace();
+            if(DEBUG){e.printStackTrace();}
             System.exit(1);
         }
 
@@ -125,7 +126,7 @@ public class Scheduler extends AbstractServer {
                 
             }
             catch(IOException e){
-                e.printStackTrace();
+                if(DEBUG){e.printStackTrace();}
             }
         }
 
@@ -155,7 +156,7 @@ public class Scheduler extends AbstractServer {
                 
             } catch (SocketException e) {
                 System.out.print("Unable to listen on UDP "+uPort+"\n");
-                e.printStackTrace();
+                if(DEBUG){e.printStackTrace();}
                 System.exit(1);
             } 
             
@@ -164,7 +165,7 @@ public class Scheduler extends AbstractServer {
                     uSock.receive(in);
                     contE.execute(new CWorker(in));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if(DEBUG){e.printStackTrace();}
                 }
             }
         }
@@ -211,7 +212,7 @@ public class Scheduler extends AbstractServer {
                 }
             } catch (IOException e) {
                 System.out.print("Could not read from stdin.\n");
-                e.printStackTrace();
+                if(DEBUG){e.printStackTrace();}
                 System.exit(1);
             }
         }
