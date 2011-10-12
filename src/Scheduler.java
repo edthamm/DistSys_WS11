@@ -29,7 +29,7 @@ public class Scheduler extends AbstractServer {
     private DatagramSocket uSock;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
-    private LinkedList<Company> Companies = new LinkedList<Company>(); //only written to once after that only read no need to be concurrent
+    private List<Company> Companies = Collections.synchronizedList(new LinkedList<Company>());
     private ExecutorService contE = Executors.newCachedThreadPool();
     private static final boolean DEBUG = true;
     
@@ -99,6 +99,7 @@ public class Scheduler extends AbstractServer {
         try {
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
             
+            sched.readCompanies();
             sched.inputListen();
             sched.control();
             sched.listen();
