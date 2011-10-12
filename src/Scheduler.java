@@ -1,5 +1,12 @@
 /**
  * 
+ * @author Eduard Thamm
+ * @matnr 0525087
+ * @brief A Scheduling server handling TaskEngins and Clients
+ * @detail This Server manages TEs by receiving their isAlive messages and querying them for data if necessary as well as suspending them if they are not needed.
+ *  It also manages company data for accounting and billing purposes. 
+ * This program was not written with security in mind 
+ * !!!DO NOT USE IN PRODUCTIVE ENVIROMENT!!!
  */
 
 
@@ -8,6 +15,7 @@ import java.net.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 
@@ -21,6 +29,7 @@ public class Scheduler extends AbstractServer {
     private DatagramSocket uSock;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
+    private LinkedList<Company> Companies = new LinkedList<Company>(); //only written to once after that only read no need to be concurrent
     private ExecutorService contE = Executors.newCachedThreadPool();
     private static final boolean DEBUG = true;
     
@@ -49,6 +58,14 @@ public class Scheduler extends AbstractServer {
             java.util.Properties companies = new java.util.Properties();
             try {
                 companies.load(in);
+                Set<String> companyNames = companies.stringPropertyNames();
+                for (String companyName : companyNames){
+                    String password = companies.getProperty(companyName);
+                    Company c = new Company();
+                    c.name = companyName;
+                    c.password = password;
+                    Companies.add(c);
+                }
                 
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -200,7 +217,11 @@ public class Scheduler extends AbstractServer {
                         break;
                     }
                     if(userin.contentEquals("!companies")){
-                        
+                        int i = 1;
+                        for (Company c : Companies){
+                            System.out.print(i+". "+c.toString());
+                            i++;
+                        }                        
                         break;
                     }
                     if(userin.contentEquals("!exit")){
@@ -251,6 +272,19 @@ public class Scheduler extends AbstractServer {
         
         public String toString(){
             return("IP: "+ip+", TCP: "+tcp+", UDP: "+udp+", "+status.toString()+", Energy Signature: min "+minE+", max "+maxE+", Load: "+load+"%\n");
+        }
+    }
+    
+    private class Company{
+        private String name = null;
+        private String password = null; //this is inherently unsafe in production use encryption
+        private COMPANYCONNECT line = null;
+        private int low = 0;
+        private int middle = 0;
+        private int high = 0;
+        
+        public String toString(){
+            return(name+" ("+line.toString()+") LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
         }
     }
 

@@ -3,7 +3,8 @@
  * @matnr 0525087
  * @brief Client program for DSLab.
  * @detail Simple Client for the DsLab performs various activities like logging in. requesting
- * resources and some things more.
+ * resources and some things more. This program was not written with security in mind 
+ * !!!DO NOT USE IN PRODUCTIVE ENVIROMENT!!!
  */
 
 import java.io.*;
