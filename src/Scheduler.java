@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.*;
 
 
@@ -25,7 +27,7 @@ public class Scheduler extends AbstractServer {
     private int minT;
     private int maxT;
     private int tout;
-    private int checkP;
+    private int checkP; //TODO ask about this what is it to do?
     private DatagramSocket uSock;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
@@ -248,6 +250,8 @@ public class Scheduler extends AbstractServer {
         private int minE;
         private int maxE;
         private int load;
+        Timer time;
+        TimerTask TTASK;
         
         public GTEntry(String ip, int tcp, int udp, GTSTATUS status, int minE, int maxE , int load){
             this.ip = ip;
@@ -259,20 +263,32 @@ public class Scheduler extends AbstractServer {
             this.load = load;            
         }
         
+        //TODO this seems terribly inefficient
         public void startTimer(){
-            
+            time = new Timer();
+            time.schedule(new Timeout(), tout);
         }
         
         public void stopTimer(){
-            
+            time.cancel();
         }
         
         public void resetTimer(){
-            
+            time.cancel();
+            time = new Timer();
+            time.schedule(new Timeout(), tout);
         }
         
         public String toString(){
             return("IP: "+ip+", TCP: "+tcp+", UDP: "+udp+", "+status.toString()+", Energy Signature: min "+minE+", max "+maxE+", Load: "+load+"%\n");
+        }
+        
+        private class Timeout extends TimerTask{
+
+            public void run() {
+                status = GTSTATUS.offline;                
+            }
+            
         }
     }
     
