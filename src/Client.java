@@ -240,6 +240,7 @@ public class Client {
      */
     private void executeTask(int id, String script){
         Socket tsock;
+        //TODO closing tasksocket = ???
         PrintWriter tout = null;
         DataOutputStream dout = null;
         
@@ -258,9 +259,11 @@ public class Client {
             dout = new DataOutputStream(tsock.getOutputStream());
             tout = new PrintWriter(tsock.getOutputStream());
         } catch (UnknownHostException e) {
-            //TODO useful error msgs
+            System.out.print("The Host Task Engine "+t.taskEngine+" is unknown. Can not connect.\n");
             if(DEBUG){e.printStackTrace();}
+            return;
         } catch (IOException e) {
+            System.out.print("Sorry encounterd a problem in opening the outgoing Task Engine socket.\n");
             if(DEBUG){e.printStackTrace();}
         }
         
@@ -269,7 +272,7 @@ public class Client {
         tout.println(script);
         tout.flush();
         
-        //after connecting sending file starts immediately
+        //TODO see if the other side can get the difference between txt and data
         //TODO see what happens if remote end hangs up do to not available and catch that
         try {
             FileInputStream fis = new FileInputStream(f);
@@ -278,10 +281,13 @@ public class Client {
             dout.write(ba,0,ba.length);
             dout.flush();
         } catch (FileNotFoundException e) {
-            //TODO nice error msgs
+            System.out.print("Sorry but "+t.name+" seems to be inexistant.\n");
             if(DEBUG){e.printStackTrace();}
+            return;
         } catch (IOException e) {
+            System.out.print("There was a problem with the remote connection, could not send file.\n");
             if(DEBUG){e.printStackTrace();}
+            return;
         }
 
         System.out.print("Transmitted Task!\n");
@@ -402,7 +408,8 @@ public class Client {
                 } catch (IOException e) {
                     System.out.print("Could not read from socket.\n");
                     if(DEBUG){e.printStackTrace();}
-                    System.exit(1);//this is not really clean maybe write a error exit method
+                    Listener.this.exit();
+                    System.exit(1);
                 }
                 if(rcv.contentEquals("Successfully logged out.") || rcv.contentEquals("Wrong company or password.")){
                     System.out.print(rcv +"\n");
@@ -432,6 +439,18 @@ public class Client {
             }
             return;
 
+        }
+        
+        private void exit(){
+            try {
+                lin.close();
+                lsock.close();
+            } catch (IOException e) {
+                if(DEBUG){e.printStackTrace();}
+            }
+            closeSchedulerConnection();
+            exit();
+            
         }
         
         /*
@@ -489,4 +508,4 @@ public class Client {
         
     }
 }
-//TODO login/logout and te connection termination protocol
+
