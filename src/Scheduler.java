@@ -27,7 +27,7 @@ public class Scheduler extends AbstractServer {
     private int minT;
     private int maxT;
     private int tout;
-    private int checkP; //TODO ask about this what is it to do?
+    private int checkP; //TODO ask about this in the forum!!!
     private int BUFSIZE = 1024;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
@@ -177,7 +177,7 @@ public class Scheduler extends AbstractServer {
                     return "Not enough capacity. Try again later.";
                 }
                 return "Assigned engine: "+g.ip+" "+g.tcp+" to task "+in[1];
-                
+                //TODO set accounting info
                 
             }
             if(in[0].contentEquals("!login")){
@@ -232,31 +232,23 @@ public class Scheduler extends AbstractServer {
             }
         }
         
-        public void sendToTaskEngine(GTEntry g, String msg){
-          byte[]  buf = new byte[BUFSIZE];
-          buf = msg.getBytes();
-          try {
-            DatagramPacket p = new DatagramPacket(buf, buf.length,InetAddress.getByName(g.ip),g.udp);
-            uSock.send(p);
-        } catch (UnknownHostException e) {
-            System.out.print("Could not send message to "+g.ip+" on UDP "+g.udp+" Host Unknown.\n");
-            if(DEBUG){e.printStackTrace();}
-        } catch (IOException e) {
-            System.out.print("Could not send message to "+g.ip+" on UDP "+g.udp+" I/O Error.\n");
-            if(DEBUG){e.printStackTrace();}
-        }
-        }
+
     }
     
     private class CWorker extends Thread{
         //One CWorker manages on GTE
-        private DatagramPacket in;
+        private DatagramPacket in = null;
         public CWorker(DatagramPacket in) {
             this.in = in;
         }
         
+        public CWorker(){
+        	
+        }
+        
         public void run(){
-            for (GTEntry g : GTs){
+            if(in == null){return;}// do a nice msg
+        	for (GTEntry g : GTs){
                 if (g.ip == in.getAddress().toString()){ 
                     if(g.status != GTSTATUS.suspended){//ignore isAlives of suspended engines
                         g.resetTimer();
@@ -281,6 +273,20 @@ public class Scheduler extends AbstractServer {
             
         }
         
+        public void sendToTaskEngine(GTEntry g, String msg){
+            byte[]  buf = new byte[BUFSIZE];
+            buf = msg.getBytes();
+            try {
+              DatagramPacket p = new DatagramPacket(buf, buf.length,InetAddress.getByName(g.ip),g.udp);
+              uSock.send(p);
+          } catch (UnknownHostException e) {
+              System.out.print("Could not send message to "+g.ip+" on UDP "+g.udp+" Host Unknown.\n");
+              if(DEBUG){e.printStackTrace();}
+          } catch (IOException e) {
+              System.out.print("Could not send message to "+g.ip+" on UDP "+g.udp+" I/O Error.\n");
+              if(DEBUG){e.printStackTrace();}
+          }
+          }
         
     }
     
@@ -430,12 +436,12 @@ public class Scheduler extends AbstractServer {
         }
         
         private void suspend(GTEntry g){
-            c.sendToTaskEngine(g, "!suspend");
+            (new CWorker()).sendToTaskEngine(g, "!suspend");
             g.status = GTSTATUS.suspended;
         }
         
         private void activate(GTEntry g){
-            c.sendToTaskEngine(g, "!wakeUp");
+            (new CWorker()).sendToTaskEngine(g, "!wakeUp");
             g.status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
             
         }
