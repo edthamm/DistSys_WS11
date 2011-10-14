@@ -179,18 +179,18 @@ public class Client {
      * Postconditions: new task with unique taskid prepared
      */
     private void prepare(String task, String type){
-        TYPE typ = null;
+        TASKTYPE typ = null;
         if(type.contentEquals("LOW")){
-            typ = TYPE.LOW;
+            typ = TASKTYPE.LOW;
             
         }
         else{
             if(type.contentEquals("MIDDLE")){
-                typ = TYPE.MIDDLE;
+                typ = TASKTYPE.MIDDLE;
             }
             else{
                 if(type.contentEquals("HIGH")){
-                    typ = TYPE.HIGH;
+                    typ = TASKTYPE.HIGH;
                 }
         
                 else{
@@ -473,13 +473,13 @@ public class Client {
     private static class Task{
         public final int id;
         public String name;
-        public TYPE type;
+        public TASKTYPE type;
         static int idCount = 0;
         public int port = 0;
         public String taskEngine = "none";
         public TASKSTATE status;
         
-        public Task(String n, TYPE t){
+        public Task(String n, TASKTYPE t){
             id = ++idCount;
             name = n;
             type = t;

@@ -28,11 +28,13 @@ public class Scheduler extends AbstractServer {
     private int maxT;
     private int tout;
     private int checkP; //TODO ask about this what is it to do?
-    private DatagramSocket uSock;
+    private int BUFSIZE = 1024;
+    private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
     private List<Company> Companies = Collections.synchronizedList(new LinkedList<Company>());
     private ExecutorService contE = Executors.newCachedThreadPool();
+    private Controller c = null;
     private static final boolean DEBUG = true;
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
@@ -45,7 +47,7 @@ public class Scheduler extends AbstractServer {
     }
     
     private void control() {
-        Controller c = new Controller();
+        c = new Controller();
         c.run();        
     }
     
@@ -70,16 +72,17 @@ public class Scheduler extends AbstractServer {
                 }
                 
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+                System.out.print("Could not read from company.properties. Exiting.\n");
+                exitRoutineFail();
                 if(DEBUG){e.printStackTrace();}
             }
         }
     }
     
-    public int schedule(){
-        int i = 0;
+    public GTEntry schedule(String t){
         
-        return i;
+        //TODO logic
+        return null;
     }
     
     private void efficencyCheck(){
@@ -92,6 +95,14 @@ public class Scheduler extends AbstractServer {
         uSock.close();
         super.exitRoutine();
         System.exit(0);
+        
+    }
+    
+    public void exitRoutineFail(){
+        contE.shutdownNow();
+        uSock.close();
+        super.exitRoutineFail();
+        System.exit(1);
         
     }
 
@@ -144,12 +155,11 @@ public class Scheduler extends AbstractServer {
                 while((input = in.readLine()) != null){
                     output = processInput(input);
                     out.println(output);
-                    //TODO ad termination on bye
                 }
                 in.close();
                 out.close();
                 Csock.close();
-                
+                return;
             }
             catch(IOException e){
                 if(DEBUG){e.printStackTrace();}
@@ -157,8 +167,34 @@ public class Scheduler extends AbstractServer {
         }
 
         private String processInput(String input) {
-            // TODO logic
-            return null;
+            String[] in = input.split(" ");
+            
+
+
+            if(in[0].contentEquals("!requestEngine")){
+                GTEntry g = schedule(in[2]);
+                if(g == null){
+                    return "Not enough capacity. Try again later.";
+                }
+                return "Assigned engine: "+g.ip+" "+g.tcp+" to task "+in[1];
+                
+                
+            }
+            if(in[0].contentEquals("!login")){
+                for(Company c : Companies){
+                    if(in[1].contentEquals(c.name) && in[2].contentEquals(c.password)){
+                        return "Successfully logged in.";
+                    }
+                    return"Wrong company or password.";
+                }
+                
+            }
+            if(in[0].contentEquals("!logout")){
+                return "Successfully logged out.";   
+            }
+            
+            
+            return "Unrecognised message send !login,!logout, or !requestEngine."; //would not do this in production gives away to much info.
         }
         
     }
@@ -169,12 +205,12 @@ public class Scheduler extends AbstractServer {
     
 
     private class Controller extends Thread{
-        byte[] buf = new byte[1024];
+        byte[] buf = new byte[BUFSIZE];
         private DatagramPacket in = new DatagramPacket(buf, buf.length);
         
         /*
          * Preconditions: none
-         * Postconditions: a controller listens on the designated port and instantiates a worker for each new incoming GTE
+         * Postconditions: a controller listens on the designated port and instantiates a worker for each new incoming GTE, or send msgs to tes
          */
         public void run(){
             try {
@@ -195,6 +231,21 @@ public class Scheduler extends AbstractServer {
                 }
             }
         }
+        
+        public void sendToTaskEngine(GTEntry g, String msg){
+          byte[]  buf = new byte[BUFSIZE];
+          buf = msg.getBytes();
+          try {
+            DatagramPacket p = new DatagramPacket(buf, buf.length,InetAddress.getByName(g.ip),g.udp);
+            uSock.send(p);
+        } catch (UnknownHostException e) {
+            System.out.print("Could not send message to "+g.ip+" on UDP "+g.udp+" Host Unknown.\n");
+            if(DEBUG){e.printStackTrace();}
+        } catch (IOException e) {
+            System.out.print("Could not send message to "+g.ip+" on UDP "+g.udp+" I/O Error.\n");
+            if(DEBUG){e.printStackTrace();}
+        }
+        }
     }
     
     private class CWorker extends Thread{
@@ -206,9 +257,15 @@ public class Scheduler extends AbstractServer {
         
         public void run(){
             for (GTEntry g : GTs){
-                if (g.ip == in.getAddress().toString()){
-                    g.resetTimer();
-                    return;
+                if (g.ip == in.getAddress().toString()){ 
+                    if(g.status != GTSTATUS.suspended){//ignore isAlives of suspended engines
+                        g.resetTimer();
+                        g.status = GTSTATUS.online;
+                        return;
+                    }
+                    else{
+                        return;
+                    }
                 }
             }
             String inString = new String(in.getData(), 0, in.getLength());
@@ -277,7 +334,6 @@ public class Scheduler extends AbstractServer {
         private int maxE;
         private int load;
         Timer time;
-        TimerTask TTASK;
         
         public GTEntry(String ip, int tcp, int udp, GTSTATUS status, int minE, int maxE , int load){
             this.ip = ip;
@@ -374,10 +430,13 @@ public class Scheduler extends AbstractServer {
         }
         
         private void suspend(GTEntry g){
-            
+            c.sendToTaskEngine(g, "!suspend");
+            g.status = GTSTATUS.suspended;
         }
         
         private void activate(GTEntry g){
+            c.sendToTaskEngine(g, "!wakeUp");
+            g.status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
             
         }
     }

@@ -33,6 +33,17 @@ public abstract class AbstractServer {
         }
         System.exit(0);
     }
+    public void exitRoutineFail(){
+        e.shutdownNow();
+        try {
+            Ssock.close();
+        } catch (IOException e1) {
+            System.out.print("Could not close ServerSocket. Exiting anyway.\n");
+            e1.printStackTrace();
+            System.exit(1);
+        }
+        System.exit(1);
+    }
     
     private class Listener extends Thread{
         public void run(){
