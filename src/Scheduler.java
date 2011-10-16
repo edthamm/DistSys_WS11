@@ -29,13 +29,14 @@ public class Scheduler extends AbstractServer {
     private int tout;
     private int checkP; //TODO wait for answer on this in the forum
     private int BUFSIZE = 1024;
+    private Timer etime;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
     private List<Company> Companies = Collections.synchronizedList(new LinkedList<Company>());
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
         port = tcpPort;
@@ -56,8 +57,9 @@ public class Scheduler extends AbstractServer {
         i.start();        
     }
     
-    public void readCompanies(){
-        InputStream in = ClassLoader.getSystemResourceAsStream("company.properties");
+    public void readCompanies() throws FileNotFoundException{
+        InputStream in = null;
+        in = ClassLoader.getSystemResourceAsStream("company.properties");
         if(in != null){
             java.util.Properties companies = new java.util.Properties();
             try {
@@ -76,7 +78,6 @@ public class Scheduler extends AbstractServer {
                 exitRoutineFail();
                 if(DEBUG){e.printStackTrace();}
             }
-            //TODO catch filenotfound
         }
     }
     
@@ -87,8 +88,8 @@ public class Scheduler extends AbstractServer {
     }
     
     private void efficencyCheck(){
-        Timer time = new Timer();
-        time.scheduleAtFixedRate(new ECheck(), checkP, checkP);
+        etime = new Timer();
+        etime.scheduleAtFixedRate(new ECheck(), checkP, checkP);
     }
     
     
@@ -105,14 +106,16 @@ public class Scheduler extends AbstractServer {
     public void exitRoutine(){
         contE.shutdownNow();
         if(uSock != null){uSock.close();}
+        etime.cancel();
         super.exitRoutine();
-        System.exit(0);
+        //System.exit(0);
         
     }
     
     public void exitRoutineFail(){
         contE.shutdownNow();
-        uSock.close();
+        if(uSock != null){uSock.close();}
+        etime.cancel();
         super.exitRoutineFail();
         System.exit(1);
         
@@ -130,6 +133,7 @@ public class Scheduler extends AbstractServer {
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
             
             sched.readCompanies();
+            //TODO catch fnf
             sched.inputListen();
             sched.control();
             sched.listen();
@@ -269,8 +273,12 @@ public class Scheduler extends AbstractServer {
                 try {
                     uSock.receive(in);
                     contE.execute(new CWorker(in));
-                } catch (IOException e) {
+                } 
+                catch (IOException e) {
                     if(DEBUG){e.printStackTrace();}
+                    return;
+                
+                    
                 }
             }
         }
@@ -362,8 +370,9 @@ public class Scheduler extends AbstractServer {
                     }
                     if(userin.contentEquals("!exit")){
                         exitRoutine();
+                        return;
                     }
-                    if(userin == ""){
+                    if(userin != ""){
                         System.out.print("Unknown command.\n");
                     }
                 }

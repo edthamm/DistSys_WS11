@@ -14,11 +14,12 @@ public abstract class AbstractServer {
     private ServerSocket Ssock = null;
     private ExecutorService e = Executors.newCachedThreadPool();
     protected int port;
+    private final static boolean DEBUG = false;
     
     
     public void listen() throws IOException{
         Listener l = new Listener();
-        l.run();
+        l.start();
 
     }
     
@@ -28,10 +29,10 @@ public abstract class AbstractServer {
             Ssock.close();
         } catch (IOException e1) {
             System.out.print("Could not close ServerSocket. Exiting anyway.\n");
-            e1.printStackTrace();
+            if(DEBUG){e1.printStackTrace();}
             System.exit(1);
         }
-        System.exit(0);
+        //System.exit(0);
     }
     public void exitRoutineFail(){
         e.shutdownNow();
@@ -39,20 +40,20 @@ public abstract class AbstractServer {
             Ssock.close();
         } catch (IOException e1) {
             System.out.print("Could not close ServerSocket. Exiting anyway.\n");
-            e1.printStackTrace();
+            if(DEBUG){e1.printStackTrace();}
             System.exit(1);
         }
         System.exit(1);
     }
     
-    private class Listener extends Thread{
+    protected class Listener extends Thread{
         public void run(){
             
             try {
                 Ssock = new ServerSocket(port);
             } catch (IOException e) {
                 System.out.print("Could not listen on port: " + port + "\n");
-                e.printStackTrace();
+                if(DEBUG){e.printStackTrace();}
                 System.exit(1);
             }
             
@@ -60,7 +61,8 @@ public abstract class AbstractServer {
                 try {
                     e.execute(new Worker(Ssock.accept()));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if(DEBUG){e.printStackTrace();}
+                    return;
                 }
             }
         }
