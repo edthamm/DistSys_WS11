@@ -22,7 +22,7 @@ public class Client {
     private File tdir;
     private LinkedList<Task> taskList = new LinkedList<Task>(); 
     private ExecutorService e = Executors.newCachedThreadPool();
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     /*
      * Preconditions: srv, p not null
@@ -58,6 +58,7 @@ public class Client {
             catch(NumberFormatException e){
                 System.out.print("You entered a non integer value. Please enter an Integer value.\n");
             }
+            //TODO Terminate maybe via return value of checkaction()
         }
         return;
     
@@ -119,7 +120,7 @@ public class Client {
         }
         if(in[0].contentEquals("!exit")){
             exit(); 
-            //no return needed sys.exit()
+            return;
         }
         else{
             System.out.print("Command not recognised.\n");
@@ -340,7 +341,7 @@ public class Client {
         e.shutdownNow();
         closeSchedulerConnection();
         //TODO end all listen threads tecclose
-        System.exit(0);//for testing delete to see if clean exit
+        //System.exit(0);//for testing delete to see if clean exit
     }
     
     
@@ -369,9 +370,9 @@ public class Client {
      */
     private void closeSchedulerConnection(){
         try{
-            sin.close();
-            sout.close();
-            ssock.close();
+            if(sin != null){sin.close();}
+            if(sin != null){sout.close();}
+            if(sin != null){ssock.close();}
         }
         catch (Exception e){
             if(DEBUG){e.printStackTrace();}
