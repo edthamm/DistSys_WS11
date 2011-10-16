@@ -27,7 +27,7 @@ public class Scheduler extends AbstractServer {
     private int minT;
     private int maxT;
     private int tout;
-    private int checkP; //TODO wiat for answer on this in the forum
+    private int checkP; //TODO wait for answer on this in the forum
     private int BUFSIZE = 1024;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
@@ -48,12 +48,12 @@ public class Scheduler extends AbstractServer {
     
     private void control() {
         c = new Controller();
-        c.run();        
+        c.start();        
     }
     
     public void inputListen(){
         InputListener i = new InputListener();
-        i.run();        
+        i.start();        
     }
     
     public void readCompanies(){
@@ -76,10 +76,11 @@ public class Scheduler extends AbstractServer {
                 exitRoutineFail();
                 if(DEBUG){e.printStackTrace();}
             }
+            //TODO catch filenotfound
         }
     }
     
-    public GTEntry schedule(String t){
+    public GTEntry schedule(String t){//String is load.
         
         //TODO logic
         return null;
@@ -103,7 +104,7 @@ public class Scheduler extends AbstractServer {
     
     public void exitRoutine(){
         contE.shutdownNow();
-        uSock.close();
+        if(uSock != null){uSock.close();}
         super.exitRoutine();
         System.exit(0);
         
@@ -150,6 +151,7 @@ public class Scheduler extends AbstractServer {
     // Client handling is done in worker.
     
 
+    @SuppressWarnings("unused")//called in superclass
     private class Worker extends AbstractServer.Worker{
 
         public Worker(Socket s) {
@@ -176,11 +178,14 @@ public class Scheduler extends AbstractServer {
                 if(DEBUG){e.printStackTrace();}
             }
         }
-
+/*
+ *  Preconditions: Client ensures that in !requestEngine only HIGH,MIDDLE,LOW are allowed on in[2], Companies not null
+ *  Postconditions:
+ */
         private String processInput(String input, InetAddress sender) {
             String[] in = input.split(" ");
-            //TODO what if client dies set a timeout?
-            if(!loggedIn(sender)){
+            //TODO what if client dies set a timeout? ASK THIS
+            if(!in[0].contains("!login") && !loggedIn(sender)){
                 return "Please log in first.";
             }
 
@@ -194,12 +199,15 @@ public class Scheduler extends AbstractServer {
                     if(c.via == sender){
                         if(in[2] == "HIGH"){
                             c.high++;
+                            g.load = 100; //a high task will give 100% load but += would give more due to base load.
                         }
                         if(in[2] == "MIDDLE"){
                             c.middle++;
+                            g.load += 66;
                         }
                         if(in[2] == "LOW"){
                             c.low++;
+                            g.load += 33;
                         }
                     }
                 }
@@ -283,7 +291,7 @@ public class Scheduler extends AbstractServer {
         
         public void run(){
             if(in == null){return;}// do a nice msg
-        	for (GTEntry g : GTs){
+        	for (GTEntry g : GTs){//TODO will this run on the first engine?
                 if (g.ip == in.getAddress().toString()){ 
                     if(g.status != GTSTATUS.suspended){//ignore isAlives of suspended engines
                         g.resetTimer();
@@ -341,22 +349,23 @@ public class Scheduler extends AbstractServer {
                             System.out.print(i+". "+p.toString());
                             i++;
                         }                    
-                        break;
+                        userin = "";
                     }
                     if(userin.contentEquals("!companies")){
                         int i = 1;
                         for (Company c : Companies){
                             System.out.print(i+". "+c.toString());
                             i++;
-                        }                        
-                        break;
+                        }
+                        userin = "";
+                        
                     }
                     if(userin.contentEquals("!exit")){
                         exitRoutine();
-                        break;
                     }
-                    System.out.print("Unknown command.\n");
-                    return;
+                    if(userin == ""){
+                        System.out.print("Unknown command.\n");
+                    }
                 }
             } catch (IOException e) {
                 System.out.print("Could not read from stdin.\n");
@@ -385,8 +394,7 @@ public class Scheduler extends AbstractServer {
             this.maxE = maxE;
             this.load = load;            
         }
-        
-        //TODO this seems terribly inefficient
+        //TODO make sure this is ok
         public void startTimer(){
             time = new Timer();
             time.schedule(new Timeout(), tout);
@@ -397,7 +405,7 @@ public class Scheduler extends AbstractServer {
         }
         
         public void resetTimer(){
-            time.cancel();
+            time.cancel(); //may be called repeatedly according to doc
             time = new Timer();
             time.schedule(new Timeout(), tout);
         }
@@ -474,6 +482,7 @@ public class Scheduler extends AbstractServer {
         private void suspend(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!suspend");
             g.status = GTSTATUS.suspended;
+            g.stopTimer();
         }
         
         private void activate(GTEntry g){
