@@ -27,7 +27,7 @@ public class Scheduler extends AbstractServer {
     private int minT;
     private int maxT;
     private int tout;
-    private int checkP; //TODO ask about this in the forum!!!
+    private int checkP; //TODO wiat for answer on this in the forum
     private int BUFSIZE = 1024;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
@@ -89,6 +89,17 @@ public class Scheduler extends AbstractServer {
         Timer time = new Timer();
         time.scheduleAtFixedRate(new ECheck(), checkP, checkP);
     }
+    
+    
+    public boolean loggedIn(InetAddress in){
+        for(Company c : Companies){
+            if(c.via == in && c.line == COMPANYCONNECT.online){
+                return true;
+            }
+        }
+        return false;
+    }
+    
     
     public void exitRoutine(){
         contE.shutdownNow();
@@ -153,7 +164,7 @@ public class Scheduler extends AbstractServer {
                 String input, output;
                 
                 while((input = in.readLine()) != null){
-                    output = processInput(input);
+                    output = processInput(input,Csock.getInetAddress());
                     out.println(output);
                 }
                 in.close();
@@ -166,9 +177,12 @@ public class Scheduler extends AbstractServer {
             }
         }
 
-        private String processInput(String input) {
+        private String processInput(String input, InetAddress sender) {
             String[] in = input.split(" ");
-            
+            //TODO what if client dies set a timeout?
+            if(!loggedIn(sender)){
+                return "Please log in first.";
+            }
 
 
             if(in[0].contentEquals("!requestEngine")){
@@ -176,13 +190,27 @@ public class Scheduler extends AbstractServer {
                 if(g == null){
                     return "Not enough capacity. Try again later.";
                 }
+                for(Company c : Companies){
+                    if(c.via == sender){
+                        if(in[2] == "HIGH"){
+                            c.high++;
+                        }
+                        if(in[2] == "MIDDLE"){
+                            c.middle++;
+                        }
+                        if(in[2] == "LOW"){
+                            c.low++;
+                        }
+                    }
+                }
                 return "Assigned engine: "+g.ip+" "+g.tcp+" to task "+in[1];
-                //TODO set accounting info
+                
                 
             }
             if(in[0].contentEquals("!login")){
                 for(Company c : Companies){
-                    if(in[1].contentEquals(c.name) && in[2].contentEquals(c.password)){
+                    if(in[1].contentEquals(c.name) && in[2].contentEquals(c.password) && c.line != COMPANYCONNECT.online){
+                        c.via = sender;
                         return "Successfully logged in.";
                     }
                     return"Wrong company or password.";
@@ -190,6 +218,13 @@ public class Scheduler extends AbstractServer {
                 
             }
             if(in[0].contentEquals("!logout")){
+                for(Company c : Companies){
+                    if(c.via == sender){
+                        c.line = COMPANYCONNECT.offline;
+                        c.via = null;
+                        break;
+                    }
+                }
                 return "Successfully logged out.";   
             }
             
@@ -381,6 +416,7 @@ public class Scheduler extends AbstractServer {
     }
     
     private class Company{
+        private InetAddress via = null;
         private String name = null;
         private String password = null; //this is inherently unsafe in production use encryption
         private COMPANYCONNECT line = null;

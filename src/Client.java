@@ -412,7 +412,7 @@ public class Client {
                     Listener.this.exit();
                     System.exit(1);
                 }
-                if(rcv.contentEquals("Successfully logged out.") || rcv.contentEquals("Wrong company or password.")){
+                if(rcv.contentEquals("Successfully logged out.") || rcv.contains("Wrong company or password.")){
                     System.out.print(rcv +"\n");
                     closeSchedulerConnection();
                     break;
