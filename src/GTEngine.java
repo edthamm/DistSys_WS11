@@ -55,11 +55,11 @@ public class GTEngine extends AbstractServer {
     }
     
     private void UDPListen(){
-        
+        //TODO logic
     }
     
     private void startIsAlive(){
-        
+        //TODO logic
     }
     
     
@@ -137,7 +137,7 @@ public class GTEngine extends AbstractServer {
                 
                 //Replace name in cmd string.
                 execln.replace(tname, tname+num);
-                
+                //TODO set an reset load
                 //fork and pipe stdout to sock
                 Process p = Runtime.getRuntime().exec(execln);
                 BufferedReader pin = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -151,6 +151,7 @@ public class GTEngine extends AbstractServer {
                 p.destroy();
                 toCl.close();
                 Csock.close();
+                f.delete();
                 return;
                 
                 
@@ -162,7 +163,6 @@ public class GTEngine extends AbstractServer {
         }
     }
 
-    @SuppressWarnings("unused")//called in superclass
     private class InputListener extends Thread{
         public void run(){
             BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
