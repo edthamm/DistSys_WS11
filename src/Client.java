@@ -49,16 +49,16 @@ public class Client {
     public void run() throws IOException{
         BufferedReader stdin = new BufferedReader( new InputStreamReader(System.in));
         String userin;
+        boolean exitFlag = false;
         
-        while((userin = stdin.readLine()) != null){
+        while(!exitFlag && (userin = stdin.readLine()) != null){
             String usersp[] = userin.split(" ");
             try{
-                checkAction(usersp);
+                exitFlag = checkAction(usersp);
             }
             catch(NumberFormatException e){
                 System.out.print("You entered a non integer value. Please enter an Integer value.\n");
             }
-            //TODO Terminate maybe via return value of checkaction()
         }
         return;
     
@@ -68,63 +68,63 @@ public class Client {
      * Preconditions: user input received
      * Postconditions: user input processed and handling function called accordingly
      */
-    private void checkAction(String[] in) throws NumberFormatException{
+    private boolean checkAction(String[] in) throws NumberFormatException{
         
         if(in[0].contentEquals("!login")){
             if(in.length != 3){
                 System.out.print("Invalid parameters. Usage: !login username password.\n");
-                return;
+                return false;
             }
             login(in[1],in[2]);
-            return; 
+            return false; 
         }
         if(in[0].contentEquals("!logout")){
             logout();
-            return; 
+            return false; 
         }        
         if(in[0].contentEquals("!list")){
             list();
-            return; 
+            return false; 
         }
         if(in[0].contentEquals("!prepare")){
             if(in.length != 3){
                System.out.print("Invalid parameters. Usage: !prepare taskname tasktype.\n");
-               return;
+               return false;
             }
             prepare(in[1],in[2]);
-           return; 
+           return false; 
         }
         if(in[0].contentEquals("!requestEngine")){
             if(in.length != 2){
                 System.out.print("Invalid parameters. Usage: !requestEngine taskid.\n");
-                return;
+                return false;
             }
             requestEngine(Integer.parseInt(in[1]));
-            return; 
+            return false; 
         }
         if(in[0].contentEquals("!executeTask")){
             if(in.length != 3){
                 System.out.print("Invalid parameters. Usage: !executeTask taskid startscript.\n");
-                return;
+                return false;
             } 
             executeTask(Integer.parseInt(in[1]),in[2]);
-           return; 
+           return false; 
         }
         if(in[0].contentEquals("!info")){
             if(in.length != 2){
                 System.out.print("Invalid parameters. Usage: !info taskid.\n");
-                return;
+                return false;
             }
             info(Integer.parseInt(in[1]));
-            return; 
+            return false; 
         }
         if(in[0].contentEquals("!exit")){
             exit(); 
-            return;
+            return true;
         }
         else{
             System.out.print("Command not recognised.\n");
-            return;
+            return false;
         }
     }
     
@@ -241,7 +241,7 @@ public class Client {
      * Postconditions: task starts executing
      */
     private void executeTask(int id, String script){
-        Socket tsock;
+        Socket tsock = null;
         //TODO closing tasksocket = ???
         PrintWriter tout = null;
         DataOutputStream dout = null;
@@ -269,11 +269,24 @@ public class Client {
             if(DEBUG){e.printStackTrace();}
         }
         
-        File f = new File(tdir.getAbsolutePath()+t.name);
-        byte[] ba = new byte[(int) f.length()];  //this is not great but it works
+        try {
+            Listener L = new Listener(tsock, new BufferedReader(new InputStreamReader(tsock.getInputStream())));
+            L.start();
+        } catch (IOException e) {
+            System.out.print("Could not listen for replay from Task Engine.\n");
+            if(DEBUG){e.printStackTrace();}
+            return;
+        }
+        
+        //Transmit the command string string.
+        //BEWARE THIS IS UNVALIDATE USER INPUT!!!
         tout.println(script);
+        tout.println(id);
         tout.flush();
         
+        
+        File f = new File(tdir.getAbsolutePath()+t.name);
+        byte[] ba = new byte[(int) f.length()];  //this is not great but it works
         //TODO see if the other side can get the difference between txt and data
         //TODO see what happens if remote end hangs up do to not available and catch that
         try {
@@ -291,8 +304,8 @@ public class Client {
             if(DEBUG){e.printStackTrace();}
             return;
         }
-
         System.out.print("Transmitted Task!\n");
+
     }
     
     
@@ -341,7 +354,7 @@ public class Client {
         e.shutdownNow();
         closeSchedulerConnection();
         //TODO end all listen threads tecclose
-        //System.exit(0);//for testing delete to see if clean exit
+        //System.exit(0);
     }
     
     
@@ -376,6 +389,7 @@ public class Client {
         }
         catch (Exception e){
             if(DEBUG){e.printStackTrace();}
+            return;
         }
         sin = null;
         sout = null;
@@ -411,12 +425,11 @@ public class Client {
                     System.out.print("Could not read from socket.\n");
                     if(DEBUG){e.printStackTrace();}
                     Listener.this.exit();
-                    System.exit(1);
                 }
                 if(rcv.contentEquals("Successfully logged out.") || rcv.contains("Wrong company or password.")){
                     System.out.print(rcv +"\n");
                     closeSchedulerConnection();
-                    break;
+                    return;
                 }
                 if(rcv.contains("Assigned engine:")){
                     String rs[] = rcv.split(" ");
@@ -425,19 +438,22 @@ public class Client {
                     taskList.get(Integer.parseInt(rs[6])-1).taskEngine = rs[2];
                     taskList.get(Integer.parseInt(rs[6])-1).status = TASKSTATE.assigned;
                     System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[3]+"\n");
-                    break;
+                    rcv = "";
                 }
                 if(rcv.contains("Started execution")){
                     String rs[] = rcv.split(" ");
                     taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.executing;
-                    break;
+                    rcv = "";
                 }
                 if(rcv.contains("Finished Task")){
                     String rs[] = rcv.split(" ");
                     taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.finished;
-                    break;
+                    //TODO Check this might not work.
+                    return;
                 }
-                System.out.print(rcv +"\n");
+                if(!rcv.contentEquals("")){
+                    System.out.print(rcv +"\n");
+                }
             }
             return;
 
@@ -503,7 +519,7 @@ public class Client {
             c.run();
         } catch(NumberFormatException e){
             System.out.print("Second argument must be an Integer value.\n");
-            System.exit(1);
+            System.exit(1);//return value
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
         }
