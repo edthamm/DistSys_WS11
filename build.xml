@@ -19,7 +19,7 @@
     </target>
 	
 	<target name="run-scheduler" depends="compile" description="Run Scheduler.">
-	    <java classname="Scheduler" fork="true" classpathref="project.classpath">
+	    <java classname="Scheduler" fork="true" classpathref=".classpath">
 	        <arg value="12370"/><!-- tcpPort 10000 + dslabXXX * 10-->
 	        <arg value="12371"/><!-- udpPort 10000 + dslabXXX * 10 + 1-->
 	        <arg value="2"/><!-- minimum of active generic task engines -->
@@ -30,7 +30,7 @@
 	</target>
 	
     <target name="run-client" depends="compile" description="Run client.">
-        <java classname="Client" fork="true" classpathref="project.classpath">
+        <java classname="Client" fork="true" classpathref=".classpath">
             <arg value="localhost"/><!-- schedulerHost -->
             <arg value="12370"/><!-- schedulerTCPPort 10000 + dslabXXX * 10-->
         	<arg value="your/taskDir"/><!-- taskDir -->
@@ -38,7 +38,7 @@
     </target>
     
     <target name="run-gtengine1" depends="compile" description="Run 1st Generic Task Engine.">
-        <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
+        <java classname="your.Generic Task Engine" fork="true" classpathref=".classpath">
         	<arg value="12372"/><!-- tcpPort 10000 + dslabXXX * 10 + 2-->
         	<arg value="localhost"/><!-- schedulerHost -->
             <arg value="12371"/><!-- schedulerUDPPort 10000 + dslabXXX * 10 + 1-->
@@ -50,7 +50,7 @@
     </target>
     
     <target name="run-gtengine2" depends="compile" description="Run 1st Generic Task Engine.">
-        <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
+        <java classname="your.Generic Task Engine" fork="true" classpathref=".classpath">
         	<arg value="12373"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
             <arg value="12371"/><!-- schedulerUDPPort -->
@@ -62,7 +62,7 @@
     </target>
     
     <target name="run-gtengine3" depends="compile" description="Run 1st Generic Task Engine.">
-        <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
+        <java classname="your.Generic Task Engine" fork="true" classpathref=".classpath">
         	<arg value="12374"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
             <arg value="12371"/><!-- schedulerUDPPort -->
@@ -74,7 +74,7 @@
     </target>
     
     <target name="run-gtengine4" depends="compile" description="Run 1st Generic Task Engine.">
-        <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
+        <java classname="your.Generic Task Engine" fork="true" classpathref=".classpath">
         	<arg value="12375"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
             <arg value="12371"/><!-- schedulerUDPPort -->
@@ -86,7 +86,7 @@
     </target>
     
     <target name="run-gtengine5" depends="compile" description="Run 1st Generic Task Engine.">
-        <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
+        <java classname="your.Generic Task Engine" fork="true" classpathref=".classpath">
         	<arg value="12376"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
             <arg value="12371"/><!-- schedulerUDPPort -->
@@ -98,7 +98,7 @@
     </target>
     
     <target name="run-gtengine6" depends="compile" description="Run 6th Generic Task Engine.">
-        <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
+        <java classname="your.Generic Task Engine" fork="true" classpathref=".classpath">
         	<arg value="12377"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
             <arg value="12371"/><!-- schedulerUDPPort -->
