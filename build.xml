@@ -4,13 +4,13 @@
     <property name="src.dir" value="src"/>
     <property name="build.dir" value="build"/>
     
-    <path id="project.classpath">
+    <path id=".classpath">
         <pathelement location="${build.dir}"/>
     </path>
     
     <target name="compile" description="Compile project.">
         <mkdir dir="${build.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="project.classpath" debug="true" deprecation="true" includeantruntime="false"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref=".classpath" debug="true" deprecation="true" includeantruntime="false"/>
         <copy todir="${build.dir}">
             <fileset dir="${src.dir}">
                 <include name="*.properties"/>
@@ -19,9 +19,9 @@
     </target>
 	
 	<target name="run-scheduler" depends="compile" description="Run Scheduler.">
-	    <java classname="your.Scheduler" fork="true" classpathref="project.classpath">
-	        <arg value="10000 + dslabXXX * 10"/><!-- tcpPort -->
-	        <arg value="10000 + dslabXXX * 10 + 1"/><!-- udpPort -->
+	    <java classname="Scheduler" fork="true" classpathref="project.classpath">
+	        <arg value="12370"/><!-- tcpPort 10000 + dslabXXX * 10-->
+	        <arg value="12371"/><!-- udpPort 10000 + dslabXXX * 10 + 1-->
 	        <arg value="2"/><!-- minimum of active generic task engines -->
 	        <arg value="4"/><!-- minimum of active generic task engines -->
 	        <arg value="3000"/><!-- fileserverTimeout -->
@@ -30,18 +30,18 @@
 	</target>
 	
     <target name="run-client" depends="compile" description="Run client.">
-        <java classname="your.Client" fork="true" classpathref="project.classpath">
+        <java classname="Client" fork="true" classpathref="project.classpath">
             <arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10"/><!-- schedulerTCPPort -->
+            <arg value="12370"/><!-- schedulerTCPPort 10000 + dslabXXX * 10-->
         	<arg value="your/taskDir"/><!-- taskDir -->
         </java>
     </target>
     
     <target name="run-gtengine1" depends="compile" description="Run 1st Generic Task Engine.">
         <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
-        	<arg value="10000 + dslabXXX * 10 + 2"/><!-- tcpPort -->
+        	<arg value="12372"/><!-- tcpPort 10000 + dslabXXX * 10 + 2-->
         	<arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10 + 1"/><!-- schedulerUDPPort -->
+            <arg value="12371"/><!-- schedulerUDPPort 10000 + dslabXXX * 10 + 1-->
             <arg value="1000"/><!-- alivePeriod -->
         	<arg value="90"/><!-- minConsumption (consumption after start-up) -->
         	<arg value="240"/><!-- maxConsumption (consumption at 100% load) -->
@@ -51,9 +51,9 @@
     
     <target name="run-gtengine2" depends="compile" description="Run 1st Generic Task Engine.">
         <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
-        	<arg value="10000 + dslabXXX * 10 + 3"/><!-- tcpPort -->
+        	<arg value="12373"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10 + 1"/><!-- schedulerUDPPort -->
+            <arg value="12371"/><!-- schedulerUDPPort -->
             <arg value="1000"/><!-- alivePeriod -->
         	<arg value="90"/><!-- minConsumption (consumption after start-up) -->
         	<arg value="250"/><!-- maxConsumption (consumption at 100% load) -->
@@ -63,9 +63,9 @@
     
     <target name="run-gtengine3" depends="compile" description="Run 1st Generic Task Engine.">
         <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
-        	<arg value="10000 + dslabXXX * 10 + 4"/><!-- tcpPort -->
+        	<arg value="12374"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10 + 1"/><!-- schedulerUDPPort -->
+            <arg value="12371"/><!-- schedulerUDPPort -->
             <arg value="1000"/><!-- alivePeriod -->
         	<arg value="90"/><!-- minConsumption (consumption after start-up) -->
         	<arg value="260"/><!-- maxConsumption (consumption at 100% load) -->
@@ -75,9 +75,9 @@
     
     <target name="run-gtengine4" depends="compile" description="Run 1st Generic Task Engine.">
         <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
-        	<arg value="10000 + dslabXXX * 10 + 5"/><!-- tcpPort -->
+        	<arg value="12375"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10 + 1"/><!-- schedulerUDPPort -->
+            <arg value="12371"/><!-- schedulerUDPPort -->
             <arg value="1000"/><!-- alivePeriod -->
         	<arg value="110"/><!-- minConsumption (consumption after start-up) -->
         	<arg value="200"/><!-- maxConsumption (consumption at 100% load) -->
@@ -87,9 +87,9 @@
     
     <target name="run-gtengine5" depends="compile" description="Run 1st Generic Task Engine.">
         <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
-        	<arg value="10000 + dslabXXX * 10 + 6"/><!-- tcpPort -->
+        	<arg value="12376"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10 + 1"/><!-- schedulerUDPPort -->
+            <arg value="12371"/><!-- schedulerUDPPort -->
             <arg value="1000"/><!-- alivePeriod -->
         	<arg value="100"/><!-- minConsumption (consumption after start-up) -->
         	<arg value="190"/><!-- maxConsumption (consumption at 100% load) -->
@@ -99,9 +99,9 @@
     
     <target name="run-gtengine6" depends="compile" description="Run 6th Generic Task Engine.">
         <java classname="your.Generic Task Engine" fork="true" classpathref="project.classpath">
-        	<arg value="10000 + dslabXXX * 10 + 7"/><!-- tcpPort -->
+        	<arg value="12377"/><!-- tcpPort -->
         	<arg value="localhost"/><!-- schedulerHost -->
-            <arg value="10000 + dslabXXX * 10 + 1"/><!-- schedulerUDPPort -->
+            <arg value="12371"/><!-- schedulerUDPPort -->
             <arg value="1000"/><!-- alivePeriod -->
         	<arg value="110"/><!-- minConsumption (consumption after start-up) -->
         	<arg value="170"/><!-- maxConsumption (consumption at 100% load) -->
