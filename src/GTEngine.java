@@ -18,7 +18,7 @@ public class GTEngine extends AbstractServer {
     
     private String schedIP;
     private int schedUPort;
-    private String tDir;
+    private File tdir;
     private int isAl;
     private int minC;
     private int maxC;
@@ -33,7 +33,15 @@ public class GTEngine extends AbstractServer {
         isAl = ia;
         minC = min;
         maxC = max;
-        tDir = td;        
+        tdir = new File(td);
+        if (!tdir.exists()){
+            System.out.print(tdir.getName()+"does not exists.\n");
+            System.exit(1);
+        }
+        if(!tdir.isDirectory()){
+            System.out.print(tdir.getName()+"is not a directory.\n");
+            System.exit(1);
+        }        
     }
     
     private void UDPListen(){
@@ -76,12 +84,53 @@ public class GTEngine extends AbstractServer {
     
     @SuppressWarnings("unused")//called by superclass
     private class Worker extends AbstractServer.Worker{
-
+        
+        
         public Worker(Socket s) {
             super(s);
         }
         
-        //TODO logic
+        public void run(){
+            String execln;
+            String tid;
+            String tname;
+            long flength;
+            
+            try {
+                BufferedReader textin = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
+                DataInputStream datain= new DataInputStream(Csock.getInputStream());
+                
+                execln = textin.readLine();
+                tid = textin.readLine();
+                tname = textin.readLine();
+                flength = Long.parseLong(textin.readLine());
+                
+                int num = 1;
+                while(new File(tdir.getAbsolutePath()+tname+num).exists()){
+                    num++;
+                }
+                File f = new File(tdir.getAbsolutePath()+tname+num);
+                f.createNewFile();
+                
+                byte[] ba = new byte[(int) flength];
+                FileOutputStream fos = new FileOutputStream(f);
+                BufferedOutputStream bos = new BufferedOutputStream(fos);
+                datain.read(ba, 0, ba.length);
+                
+                bos.write(ba);
+                bos.flush();
+                bos.close();
+                fos.close();
+                
+                //TODO rewrite execln and then fork
+                
+                
+            } catch (IOException e) {
+                System.out.println("Could not read from Socket");
+                if(DEBUG){e.printStackTrace();}
+                return;
+            }
+        }
     }
 
     @SuppressWarnings("unused")//called in superclass

@@ -277,15 +277,17 @@ public class Client {
             if(DEBUG){e.printStackTrace();}
             return;
         }
-        
+        File f = new File(tdir.getAbsolutePath()+t.name);
         //Transmit the command string string.
-        //BEWARE THIS IS UNVALIDATE USER INPUT!!!
+        //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
         tout.println(script);
         tout.println(id);
+        tout.println(t.name);
+        tout.println(f.length());
         tout.flush();
         
         
-        File f = new File(tdir.getAbsolutePath()+t.name);
+        
         byte[] ba = new byte[(int) f.length()];  //this is not great but it works
         //TODO see if the other side can get the difference between txt and data
         //TODO see what happens if remote end hangs up do to not available and catch that
