@@ -35,12 +35,16 @@ public class GTEngine extends AbstractServer {
         maxC = max;
         tdir = new File(td);
         if (!tdir.exists()){
-            System.out.print(tdir.getName()+"does not exists.\n");
-            System.exit(1);
+            System.out.print(tdir.getName()+"does not exists. Creating....\n");
+            if(!tdir.mkdir()){
+                System.out.print("Can not create "+tdir.getName()+". Exiting.");
+                return;
+            }
+            
         }
         if(!tdir.isDirectory()){
             System.out.print(tdir.getName()+"is not a directory.\n");
-            System.exit(1);
+            return;
         }        
     }
     
@@ -89,7 +93,7 @@ public class GTEngine extends AbstractServer {
         public Worker(Socket s) {
             super(s);
         }
-        
+        //CAUTION THIS RUNS UNVALIDATED USER INPUT AND FILES DO NOT USE IN PRODUCTION!!!
         public void run(){
             String execln;
             String tid;
@@ -100,18 +104,21 @@ public class GTEngine extends AbstractServer {
                 BufferedReader textin = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
                 DataInputStream datain= new DataInputStream(Csock.getInputStream());
                 
+                //Receive all parameters. 
                 execln = textin.readLine();
                 tid = textin.readLine();
                 tname = textin.readLine();
                 flength = Long.parseLong(textin.readLine());
                 
-                int num = 1;
+                //Find free filename and create the file 
+                int num = 0;
                 while(new File(tdir.getAbsolutePath()+tname+num).exists()){
                     num++;
                 }
                 File f = new File(tdir.getAbsolutePath()+tname+num);
                 f.createNewFile();
                 
+                //Receive the file
                 byte[] ba = new byte[(int) flength];
                 FileOutputStream fos = new FileOutputStream(f);
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -122,7 +129,23 @@ public class GTEngine extends AbstractServer {
                 bos.close();
                 fos.close();
                 
-                //TODO rewrite execln and then fork
+                //Replace name in cmd string.
+                execln.replace(tname, tname+num);
+                
+                //fork and pipe stdout to sock
+                Process p = Runtime.getRuntime().exec(execln);
+                BufferedReader pin = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                PrintWriter toCl = new PrintWriter(Csock.getOutputStream());
+                String in;
+                while((in = pin.readLine()) != null){
+                    toCl.println("Task " +tid+ ": "+in);
+                }
+                //clean up
+                pin.close();
+                p.destroy();
+                toCl.close();
+                Csock.close();
+                return;
                 
                 
             } catch (IOException e) {
