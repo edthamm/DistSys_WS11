@@ -200,7 +200,7 @@ public class Client {
                 }
             }
         }
-        
+        //TODO retest and maybe add +"/"+
         File f = new File(tdir.getAbsolutePath()+task);
         if(!f.exists()){
             System.out.print("No such file exists: "+f.getAbsolutePath()+"\n");
