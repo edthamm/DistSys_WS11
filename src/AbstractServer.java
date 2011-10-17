@@ -23,11 +23,6 @@ public abstract class AbstractServer {
 
     }
     
-    public void inputListen(){
-        InputListener i = new InputListener();
-        i.start();        
-    }
-    
     public void exitRoutine(){
         e.shutdownNow();
         try {
@@ -88,17 +83,4 @@ public abstract class AbstractServer {
             return;
         }
     }
-    
-    protected class InputListener extends Thread{
-       
-        public InputListener() {
-        }
-        
-        public void run(){
-            System.out.print("This is a dummy run, which needs to be replaced by something useful.\n");
-            return;
-        }
-    }
-
-
 }

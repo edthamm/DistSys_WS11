@@ -1,4 +1,4 @@
 
 public enum GTSTATUS {
-    online, offline, suspended
+    online,offline,suspended
 }

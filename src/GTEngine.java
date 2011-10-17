@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
+
 /**
  * 
  * @author Eduard Thamm 0525087
@@ -46,6 +47,11 @@ public class GTEngine extends AbstractServer {
             System.out.print(tdir.getName()+"is not a directory.\n");
             return;
         }        
+    }
+    
+    public void inputListen(){
+        InputListener i = new InputListener();
+        i.start();        
     }
     
     private void UDPListen(){
@@ -157,7 +163,7 @@ public class GTEngine extends AbstractServer {
     }
 
     @SuppressWarnings("unused")//called in superclass
-    private class InputListener extends AbstractServer.InputListener{
+    private class InputListener extends Thread{
         public void run(){
             BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
             String userin;

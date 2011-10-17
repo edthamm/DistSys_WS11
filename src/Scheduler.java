@@ -52,6 +52,11 @@ public class Scheduler extends AbstractServer {
         c.start();        
     }
     
+    public void inputListen(){
+        InputListener i = new InputListener();
+        i.start();        
+    }
+    
     public void readCompanies() throws FileNotFoundException{
         InputStream in = null;
         in = ClassLoader.getSystemResourceAsStream("company.properties");
@@ -339,8 +344,7 @@ public class Scheduler extends AbstractServer {
     
     //Handling user input
     
-    @SuppressWarnings("unused")//called in superclass
-    private class InputListener extends AbstractServer.InputListener{
+    private class InputListener extends Thread{
         public void run(){
             BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
             String userin;
@@ -433,7 +437,7 @@ public class Scheduler extends AbstractServer {
         private InetAddress via = null;
         private String name = null;
         private String password = null; //this is inherently unsafe in production use encryption
-        private COMPANYCONNECT line = null;
+        private COMPANYCONNECT line = COMPANYCONNECT.offline;
         private int low = 0;
         private int middle = 0;
         private int high = 0;
