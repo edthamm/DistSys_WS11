@@ -22,6 +22,7 @@ public class GTEngine extends AbstractServer {
     private int isAl;
     private int minC;
     private int maxC;
+    private int load = 0;
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
     private final static boolean DEBUG = true;
     
@@ -85,7 +86,33 @@ public class GTEngine extends AbstractServer {
 
     @SuppressWarnings("unused")//called in superclass
     private class InputListener extends AbstractServer.InputListener{
-        //TODO logic
+        public void run(){
+            BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+            String userin;
+            
+            try{
+                while((userin = stdin.readLine()) != null){
+                    if(userin.contentEquals("!load")){
+                        System.out.println("Current load: " + load);
+                        userin = "";
+                    }
+                    if(userin.contentEquals("!exit")){
+                        System.out.println("Exiting on request. Bye.");
+                        exitRoutine();
+                        return;
+                    }
+                    if(!userin.contentEquals("")){
+                        System.out.print("Unknown command.\n");
+                    }
+                }
+            } catch (IOException e) {
+                System.out.print("Could not read from stdin.\n");
+                if(DEBUG){e.printStackTrace();}
+                return;
+            }
+
+        
+        }
     }
     
 

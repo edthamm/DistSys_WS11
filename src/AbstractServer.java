@@ -85,18 +85,18 @@ public abstract class AbstractServer {
         
         public void run(){
             System.out.print("This is a dummy run, which needs to be replaced by something useful.\n");
+            return;
         }
     }
     
     protected class InputListener extends Thread{
-        
-        protected Socket Csock;
-        
+       
         public InputListener() {
         }
         
         public void run(){
             System.out.print("This is a dummy run, which needs to be replaced by something useful.\n");
+            return;
         }
     }
 

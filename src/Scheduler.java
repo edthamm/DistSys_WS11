@@ -365,17 +365,18 @@ public class Scheduler extends AbstractServer {
                         
                     }
                     if(userin.contentEquals("!exit")){
+                        System.out.println("Exiting on request. Bye.");
                         exitRoutine();
                         return;
                     }
-                    if(userin != ""){
+                    if(!userin.contentEquals("")){
                         System.out.print("Unknown command.\n");
                     }
                 }
             } catch (IOException e) {
                 System.out.print("Could not read from stdin.\n");
                 if(DEBUG){e.printStackTrace();}
-                System.exit(1);
+                return;
             }
         }
         
