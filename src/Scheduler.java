@@ -39,7 +39,7 @@ public class Scheduler extends AbstractServer {
     private static final boolean DEBUG = false;
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
-        port = tcpPort;
+        Tport = tcpPort;
         uPort = udpPort;
         minT = min;
         maxT = max;
@@ -50,11 +50,6 @@ public class Scheduler extends AbstractServer {
     private void control() {
         c = new Controller();
         c.start();        
-    }
-    
-    public void inputListen(){
-        InputListener i = new InputListener();
-        i.start();        
     }
     
     public void readCompanies() throws FileNotFoundException{
@@ -136,7 +131,7 @@ public class Scheduler extends AbstractServer {
             //TODO catch fnf
             sched.inputListen();
             sched.control();
-            sched.listen();
+            sched.tcpListen();
             sched.efficencyCheck();
             
             
@@ -344,7 +339,8 @@ public class Scheduler extends AbstractServer {
     
     //Handling user input
     
-    private class InputListener extends Thread{
+    @SuppressWarnings("unused")//called in superclass
+    private class InputListener extends AbstractServer.InputListener{
         public void run(){
             BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
             String userin;

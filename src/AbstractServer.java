@@ -13,14 +13,19 @@ public abstract class AbstractServer {
     
     private ServerSocket Ssock = null;
     private ExecutorService e = Executors.newCachedThreadPool();
-    protected int port;
+    protected int Tport;
     private final static boolean DEBUG = false;
     
     
-    public void listen() throws IOException{
+    public void tcpListen() throws IOException{
         Listener l = new Listener();
         l.start();
 
+    }
+    
+    public void inputListen(){
+        InputListener i = new InputListener();
+        i.start();        
     }
     
     public void exitRoutine(){
@@ -32,7 +37,7 @@ public abstract class AbstractServer {
             if(DEBUG){e1.printStackTrace();}
             System.exit(1);
         }
-        //System.exit(0);
+        return;
     }
     public void exitRoutineFail(){
         e.shutdownNow();
@@ -43,18 +48,18 @@ public abstract class AbstractServer {
             if(DEBUG){e1.printStackTrace();}
             System.exit(1);
         }
-        System.exit(1);
+        return;
     }
     
     protected class Listener extends Thread{
         public void run(){
             
             try {
-                Ssock = new ServerSocket(port);
+                Ssock = new ServerSocket(Tport);
             } catch (IOException e) {
-                System.out.print("Could not listen on port: " + port + "\n");
+                System.out.print("Could not listen on port: " + Tport + "\n");
                 if(DEBUG){e.printStackTrace();}
-                System.exit(1);
+                exitRoutineFail();
             }
             
             while(true){
@@ -82,5 +87,18 @@ public abstract class AbstractServer {
             System.out.print("This is a dummy run, which needs to be replaced by something useful.\n");
         }
     }
+    
+    protected class InputListener extends Thread{
+        
+        protected Socket Csock;
+        
+        public InputListener() {
+        }
+        
+        public void run(){
+            System.out.print("This is a dummy run, which needs to be replaced by something useful.\n");
+        }
+    }
+
 
 }
