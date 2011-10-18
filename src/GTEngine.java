@@ -2,13 +2,8 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.*;
 
 /**
  * 
@@ -26,6 +21,8 @@ public class GTEngine extends AbstractServer {
     private volatile int load = 0;//Load needs to be threadsafe volatile should suffice according to JLS 17.4.3 and 17.7
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
     private final static boolean DEBUG = true;
+    private DatagramSocket uSock = null;
+    private Timer time = new Timer();;
     
     public GTEngine(int tp, String sched, int udp, int ia, int min, int max, String td){
         Tport = tp;
@@ -49,17 +46,49 @@ public class GTEngine extends AbstractServer {
         }        
     }
     
-    public void inputListen(){
+    private void inputListen(){
         InputListener i = new InputListener();
         i.start();        
     }
     
-    private void UDPListen(){
-        //TODO logic
+    private boolean UDPConnect(){
+        try {
+            uSock = new DatagramSocket();
+            uSock.connect(InetAddress.getByName(schedIP), schedUPort);
+            return true;
+        } catch (SocketException e) {
+            System.out.println("Could not bind to UDP Port exiting.");
+            if(DEBUG){e.printStackTrace();}
+            return false;
+        } catch (UnknownHostException e) {
+            System.out.println("Could not find "+schedIP+" exiting.");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutine();
+            return false;
+        }
     }
     
+    
+    private void UDPListen(){
+        UDPWorker u = new UDPWorker (uSock);
+        u.start();
+    }
+    
+    /*
+     * Preconditions: timer exists
+     * Postconditions: isAlive timer is set at fixed rate
+     */
     private void startIsAlive(){
-        //TODO logic
+        time.scheduleAtFixedRate(new IASender(), isAl, isAl);
+    }
+    
+    /*
+     * Preconditions: timer exists
+     * Postconditions: isAlive timer is canceled and recreated
+     */
+    private void stopIsAlive(){
+        time.cancel();
+        time = new Timer();
     }
     
     
@@ -139,6 +168,9 @@ public class GTEngine extends AbstractServer {
         
         try{
             GTEngine gt = new GTEngine(Integer.parseInt(args[0]),args[1],Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]),args[6]);
+            if(!gt.UDPConnect()){
+                return;
+            }
             gt.inputListen();
             gt.UDPListen();
             gt.tcpListen();
@@ -267,6 +299,63 @@ public class GTEngine extends AbstractServer {
 
         
         }
+    }
+    /*
+     * Preconditions: only one UDPWorker active at a time
+     * Postconditions: Manages activate suspend msgs
+     */
+    private class UDPWorker extends Thread{
+        private DatagramSocket lSock;
+        
+        public UDPWorker(DatagramSocket uSock) {
+            lSock = uSock;
+        }
+        
+        public void run(){
+            DatagramPacket in = null;
+            while(true){
+                try {
+                    lSock.receive(in);
+                    if(in != null){
+                        if(in.getData().toString().contains("!suspend")){
+                            stopIsAlive();
+                        }
+                        if(in.getData().toString().contains("!wakeUp")){
+                            startIsAlive();
+                        }
+                    }
+                } catch (IOException e) {
+                    if(DEBUG){e.printStackTrace();}
+                    System.out.println("Error recieving UDP Massages from Scheduler.");
+                    return;
+                }
+                
+            }
+        }
+        
+    }
+    
+    private class IASender extends TimerTask{
+        public void run() {
+            String IAMsg = Tport+" "+minC+" "+maxC;
+            byte[] ba = IAMsg.getBytes();
+            DatagramPacket p;
+            try {
+                p = new DatagramPacket(ba,0,ba.length,InetAddress.getByName(schedIP),schedUPort);
+                uSock.send(p);
+            } catch (UnknownHostException e1) {
+                System.out.println("Could not send isAlive. HostUnknown");
+                if(DEBUG){e1.printStackTrace();}
+                return;
+            } catch (IOException e) {
+                System.out.println("Could not send isAlive. I/O");
+                if(DEBUG){e.printStackTrace();}
+                return;
+            }
+
+            
+        }
+        
     }
     
 
