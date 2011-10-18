@@ -32,7 +32,7 @@ public class Scheduler extends AbstractServer {
     private Timer etime;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
-    private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//needs to be threadsafe maybe Collections.synchronizedList(new LinkedList())
+    private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());
     private List<Company> Companies = Collections.synchronizedList(new LinkedList<Company>());
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
@@ -100,6 +100,7 @@ public class Scheduler extends AbstractServer {
             }
         }
         return false;
+        //client dies will be trouble already asked
     }
     
     
@@ -108,8 +109,6 @@ public class Scheduler extends AbstractServer {
         if(uSock != null){uSock.close();}
         etime.cancel();
         super.exitRoutine();
-        //System.exit(0);
-        
     }
     
     public void exitRoutineFail(){
@@ -117,8 +116,6 @@ public class Scheduler extends AbstractServer {
         if(uSock != null){uSock.close();}
         etime.cancel();
         super.exitRoutineFail();
-        System.exit(1);
-        
     }
 
     
@@ -133,7 +130,7 @@ public class Scheduler extends AbstractServer {
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
             
             sched.readCompanies();
-            //TODO catch fnf
+            //TODO catch fnf throw on in == null
             sched.inputListen();
             sched.control();
             sched.tcpListen();

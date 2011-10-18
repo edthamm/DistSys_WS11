@@ -140,17 +140,17 @@ public class Client {
     private void login(String user, String pass){
         
         try {
-            ssock = new Socket(server, port);
+            ssock = new Socket(server, port);//TODO put this to start up routine
             sout = new PrintWriter(ssock.getOutputStream(), true);
             sin = new BufferedReader(new InputStreamReader(ssock.getInputStream()));
         } catch (UnknownHostException e) {
             System.out.print("Login: Unknown Host, check server name and port.\n");
             if(DEBUG){e.printStackTrace();}
-            System.exit(1);
+            System.exit(1);//TODO exitroutine
         } catch (IOException e) {
             System.out.print("Login: Could not get I/O for "+server+" \n");
             if(DEBUG){e.printStackTrace();}
-            System.exit(1);
+            System.exit(1);//TODO exitroutine
         }
         
         sout.println("!login "+user+" "+pass);
@@ -168,7 +168,6 @@ public class Client {
         else{
             sout.println("!logout");
         }
-        //working like this would leak in c. will it leak in java?
     }
     
     
