@@ -23,7 +23,7 @@ public class GTEngine extends AbstractServer {
     private int isAl;
     private int minC;
     private int maxC;
-    private int load = 0;
+    private volatile int load = 0;//Load needs to be threadsafe volatile should suffice according to JLS 17.4.3 and 17.7
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
     private final static boolean DEBUG = true;
     
@@ -60,6 +60,72 @@ public class GTEngine extends AbstractServer {
     
     private void startIsAlive(){
         //TODO logic
+    }
+    
+    
+    /*
+     * Preconditions: n is in TASKTYPE
+     * Postconditions: returns true and updates load of engine if this results in load <=100%, false otherwise
+     */
+    private boolean upLoad(String n){
+        if(n.contentEquals("HIGH")){
+            load += 100;
+            if(load<101){
+                return true;
+            }
+            load -= 100;
+            return false;
+        }
+        if(n.contentEquals("MIDDLE")){
+            load += 66;
+            if(load<101){
+                return true;
+            }
+            load -= 66;
+            return false;
+        }
+        if(n.contentEquals("LOW")){
+            load += 33;
+            if(load<101){
+                return true;
+            }
+            load -= 33;
+            return false;
+        }
+        return false;
+    }
+    
+    
+    /*
+     * Preconditions: n is in TASKTYPE
+     * Postconditions: returns true and updates load of engine if this results in load >=0%, false otherwise
+     */
+    private boolean downLoad(String n){
+        if(n.contentEquals("HIGH")){
+            load -= 100;
+            if(load>-1){
+                return true;
+            }
+            load += 100;
+            return false;
+        }
+        if(n.contentEquals("MIDDLE")){
+            load -= 66;
+            if(load>-1){
+                return true;
+            }
+            load += 66;
+            return false;
+        }
+        if(n.contentEquals("LOW")){
+            load -= 33;
+            if(load>-1){
+                return true;
+            }
+            load += 33;
+            return false;
+        }
+        return false;
     }
     
     
@@ -103,6 +169,7 @@ public class GTEngine extends AbstractServer {
         public void run(){
             String execln;
             String tid;
+            String ttype;
             String tname;
             long flength;
             
@@ -114,6 +181,7 @@ public class GTEngine extends AbstractServer {
                 execln = textin.readLine();
                 tid = textin.readLine();
                 tname = textin.readLine();
+                ttype = textin.readLine();
                 flength = Long.parseLong(textin.readLine());
                 
                 //Find free filename and create the file 
@@ -135,20 +203,28 @@ public class GTEngine extends AbstractServer {
                 bos.close();
                 fos.close();
                 
-                //Replace name in cmd string.
-                execln.replace(tname, tname+num);
-                //TODO set an reset load
-                //fork and pipe stdout to sock
-                Process p = Runtime.getRuntime().exec(execln);
-                BufferedReader pin = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                
                 PrintWriter toCl = new PrintWriter(Csock.getOutputStream());
-                String in;
-                while((in = pin.readLine()) != null){
-                    toCl.println("Task " +tid+ ": "+in);
+                if(!upLoad(ttype)){
+                    toCl.println("Not enough capacity. Try again later.");
                 }
-                //clean up
-                pin.close();
-                p.destroy();
+                else{
+                    //Replace name in cmd string.
+                    execln.replace(tname, tname + num);
+                    //fork and pipe stdout to sock
+                    Process p = Runtime.getRuntime().exec(execln);
+                    BufferedReader pin = new BufferedReader(
+                            new InputStreamReader(p.getInputStream()));
+                    
+                    String in;
+                    while ((in = pin.readLine()) != null) {
+                        toCl.println("Task " + tid + ": " + in);
+                    }
+                    //clean up
+                    pin.close();
+                    p.destroy();
+                    downLoad(ttype);
+                }
                 toCl.close();
                 Csock.close();
                 f.delete();

@@ -283,6 +283,7 @@ public class Client {
         tout.println(script);
         tout.println(id);
         tout.println(t.name);
+        tout.println(t.type.toString());
         tout.println(f.length());
         tout.flush();
         
