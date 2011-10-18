@@ -27,7 +27,7 @@ public class Scheduler extends AbstractServer {
     private int minT;
     private int maxT;
     private int tout;
-    private int checkP; //TODO wait for answer on this in the forum
+    private int checkP;
     private int BUFSIZE = 1024;
     private Timer etime;
     private DatagramSocket uSock = null;
@@ -263,7 +263,7 @@ public class Scheduler extends AbstractServer {
             } catch (SocketException e) {
                 System.out.print("Unable to listen on UDP "+uPort+"\n");
                 if(DEBUG){e.printStackTrace();}
-                System.exit(1);
+                return;
             } 
             
             while(true){
@@ -295,7 +295,7 @@ public class Scheduler extends AbstractServer {
         }
         
         public void run(){
-            if(in == null){return;}// do a nice msg
+            if(in == null){return;}//TODO do a nice msg
         	for (GTEntry g : GTs){//TODO will this run on the first engine?
                 if (g.ip == in.getAddress().toString()){ 
                     if(g.status != GTSTATUS.suspended){//ignore isAlives of suspended engines
@@ -401,7 +401,7 @@ public class Scheduler extends AbstractServer {
             this.maxE = maxE;
             this.load = load;            
         }
-        //TODO make sure this is ok
+        
         public void startTimer(){
             time = new Timer();
             time.schedule(new Timeout(), tout);
@@ -472,7 +472,6 @@ public class Scheduler extends AbstractServer {
                 }
                 activate(minEngine);
                 //worst case first engine and that is offline well s happens
-                //TODO check min == max
             }
             if(emptyRunners > 1 && gtsUp > minT){
                 GTEntry maxEngine = GTs.get(0);

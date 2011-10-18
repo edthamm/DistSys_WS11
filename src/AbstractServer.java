@@ -30,7 +30,7 @@ public abstract class AbstractServer {
         } catch (IOException e1) {
             System.out.print("Could not close ServerSocket. Exiting anyway.\n");
             if(DEBUG){e1.printStackTrace();}
-            System.exit(1);//TODO raus
+            return;
         }
         return;
     }
@@ -41,7 +41,7 @@ public abstract class AbstractServer {
         } catch (IOException e1) {
             System.out.print("Could not close ServerSocket. Exiting anyway.\n");
             if(DEBUG){e1.printStackTrace();}
-            System.exit(1);//TODO raus
+            return;
         }
         return;
     }

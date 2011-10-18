@@ -238,7 +238,7 @@ public class GTEngine extends AbstractServer {
                 
                 PrintWriter toCl = new PrintWriter(Csock.getOutputStream());
                 if(!upLoad(ttype)){
-                    toCl.println("Not enough capacity. Try again later.");
+                    toCl.println(tid+" Not enough capacity. Try again later.");
                 }
                 else{
                     //Replace name in cmd string.

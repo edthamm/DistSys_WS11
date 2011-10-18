@@ -42,6 +42,22 @@ public class Client {
         }
     }
     
+    
+    private void startUp(){
+        try {
+            ssock = new Socket(server, port);
+            sout = new PrintWriter(ssock.getOutputStream(), true);
+            sin = new BufferedReader(new InputStreamReader(ssock.getInputStream()));
+        } catch (UnknownHostException e) {
+            System.out.print("Login: Unknown Host, check server name and port.\n");
+            if(DEBUG){e.printStackTrace();}
+            System.exit(1);
+        } catch (IOException e) {
+            System.out.print("Login: Could not get I/O for "+server+" \n");
+            if(DEBUG){e.printStackTrace();}
+            System.exit(1);
+        }
+    }
     /*
      * Preconditions: none
      * Postconditions: program execution started
@@ -138,21 +154,6 @@ public class Client {
      * Postconditions: Connection is build, reading and writing lines are opened. User is logged in to server, or error is thrown.
      */
     private void login(String user, String pass){
-        
-        try {
-            ssock = new Socket(server, port);//TODO put this to start up routine
-            sout = new PrintWriter(ssock.getOutputStream(), true);
-            sin = new BufferedReader(new InputStreamReader(ssock.getInputStream()));
-        } catch (UnknownHostException e) {
-            System.out.print("Login: Unknown Host, check server name and port.\n");
-            if(DEBUG){e.printStackTrace();}
-            System.exit(1);//TODO exitroutine
-        } catch (IOException e) {
-            System.out.print("Login: Could not get I/O for "+server+" \n");
-            if(DEBUG){e.printStackTrace();}
-            System.exit(1);//TODO exitroutine
-        }
-        
         sout.println("!login "+user+" "+pass);
         e.execute(new Listener(ssock,sin));
     }
@@ -241,7 +242,6 @@ public class Client {
      */
     private void executeTask(int id, String script){
         Socket tsock = null;
-        //TODO closing tasksocket = ???
         PrintWriter tout = null;
         DataOutputStream dout = null;
         
@@ -289,8 +289,6 @@ public class Client {
         
         
         byte[] ba = new byte[(int) f.length()];  //this is not great but it works
-        //TODO see if the other side can get the difference between txt and data
-        //TODO see what happens if remote end hangs up do to not available and catch that
         try {
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis);
@@ -355,8 +353,6 @@ public class Client {
         System.out.print("Exiting on request. Good Bye!\n");
         e.shutdownNow();
         closeSchedulerConnection();
-        //TODO end all listen threads tecclose
-        //System.exit(0);
     }
     
     
@@ -430,7 +426,6 @@ public class Client {
                 }
                 if(rcv.contentEquals("Successfully logged out.") || rcv.contains("Wrong company or password.")){
                     System.out.print(rcv +"\n");
-                    closeSchedulerConnection();
                     return;
                 }
                 if(rcv.contains("Assigned engine:")){
@@ -447,10 +442,16 @@ public class Client {
                     taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.executing;
                     rcv = "";
                 }
+                if(rcv.contains("Not enough capacity. Try again later.")){
+                    System.out.print("Not enough capacity. Try again later.\n");
+                    String rs[] = rcv.split(" ");
+                    taskList.get(Integer.parseInt(rs[0])-1).status = TASKSTATE.assigned;
+                    rcv = "";
+                }
                 if(rcv.contains("Finished Task")){
                     String rs[] = rcv.split(" ");
                     taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.finished;
-                    //TODO Check this might not work.
+                    //TODO Check this might not work. Maybe add close to tsock here
                     return;
                 }
                 if(!rcv.contentEquals("")){
@@ -518,6 +519,7 @@ public class Client {
         
         try{
             c = new Client(args[0], Integer.parseInt(args[1]), args[2]);
+            c.startUp();
             c.run();
         } catch(NumberFormatException e){
             System.out.print("Second argument must be an Integer value.\n");
