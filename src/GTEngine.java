@@ -20,7 +20,7 @@ public class GTEngine extends AbstractServer {
     private int maxC;
     private volatile int load = 0;//Load needs to be threadsafe volatile should suffice according to JLS 17.4.3 and 17.7
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
     private DatagramSocket uSock = null;
     private Timer time = new Timer();;
     
@@ -35,7 +35,7 @@ public class GTEngine extends AbstractServer {
         if (!tdir.exists()){
             System.out.print(tdir.getName()+" does not exists. Creating....\n");
             if(!tdir.mkdir()){
-                System.out.print("Can not create "+tdir.getName()+". Exiting.");
+                System.out.print("Can not create "+tdir.getName()+". Exiting.\n");
                 return;
             }
             
@@ -66,7 +66,6 @@ public class GTEngine extends AbstractServer {
             exitRoutine();
             return false;
         }
-        //TODO should i not be able to catch this here
     }
     
     
@@ -323,12 +322,11 @@ public class GTEngine extends AbstractServer {
         }
         
         public void run(){
-            DatagramPacket in = null;
+            DatagramPacket in = new DatagramPacket(new byte[1024], 0);//TODO check what this actually does
 
             while(true){
                 try {
                     uSock.receive(in);
-                    //TODO this throws nullPointer see UDPconnect()
                     if(in != null){
                         if(in.getData().toString().contains("!suspend")){
                             stopIsAlive();
@@ -340,7 +338,6 @@ public class GTEngine extends AbstractServer {
                 } catch (IOException e) {
                     if(DEBUG){e.printStackTrace();}
                     System.out.println("Error recieving UDP Massages from Scheduler.");
-                    return;
                 }
                 
             }

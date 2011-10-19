@@ -13,6 +13,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -298,7 +299,9 @@ public class Scheduler extends AbstractServer {
             if(in == null){return;}//TODO do a nice msg
             
         	if (!GTs.isEmpty()) {
-                for (GTEntry g : GTs) {
+        		Iterator<GTEntry> gi = GTs.iterator();
+                while(gi.hasNext()) {
+                	GTEntry g = gi.next();
                     if (g.ip == in.getAddress().toString()) {
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             g.resetTimer();
@@ -352,8 +355,10 @@ public class Scheduler extends AbstractServer {
                 while((userin = stdin.readLine()) != null){
                     if(userin.contentEquals("!engines")){
                         int i = 1;
-                        for(GTEntry p: GTs){
-                            System.out.print(i+". "+p.toString());
+                		Iterator<GTEntry> gi = GTs.iterator();
+                        while(gi.hasNext()) {
+                        	GTEntry g = gi.next();
+                            System.out.print(i+". "+g.toString());
                             i++;
                         }                    
                         userin = "";
@@ -406,7 +411,7 @@ public class Scheduler extends AbstractServer {
         
         public void startTimer(){
             time = new Timer();
-            time.schedule(new Timeout(), tout);
+            time.schedule(new Timeout(this), tout);
         }
         
         public void stopTimer(){
@@ -416,7 +421,7 @@ public class Scheduler extends AbstractServer {
         public void resetTimer(){
             time.cancel(); //may be called repeatedly according to doc
             time = new Timer();
-            time.schedule(new Timeout(), tout);
+            time.schedule(new Timeout(this), tout);
         }
         
         public String toString(){
@@ -424,10 +429,13 @@ public class Scheduler extends AbstractServer {
         }
         
         private class Timeout extends TimerTask{
+        	GTEntry g = null;
+        	public Timeout(GTEntry g){
+        		this.g = g;
+        	}
 
             public void run() {
-                status = GTSTATUS.offline;
-                //TODO does this give me crap by happening out of sync?
+                GTs.get(GTs.indexOf(g)).status=GTSTATUS.offline;
             }
             
         }
@@ -453,7 +461,9 @@ public class Scheduler extends AbstractServer {
             int highUsers = 0;
             int emptyRunners = 0;
             int gtsUp = 0;
-            for (GTEntry g : GTs){
+    		Iterator<GTEntry> gi = GTs.iterator();
+            while(gi.hasNext()) {
+            	GTEntry g = gi.next();
                 if(g.status == GTSTATUS.online){
                     gtsUp++;
                     if(g.load == 0){
@@ -468,7 +478,9 @@ public class Scheduler extends AbstractServer {
                 // no engine <66 load up and less than max engines active and inactive engines exist
                 // active smaller min and suspended available
                 GTEntry minEngine = GTs.get(0);
-                for (GTEntry g :GTs){
+        		gi = GTs.iterator();
+                while(gi.hasNext()) {
+                	GTEntry g = gi.next();
                     if(minEngine.minE < g.minE && g.status == GTSTATUS.suspended){
                         minEngine = g;
                     }
@@ -478,7 +490,9 @@ public class Scheduler extends AbstractServer {
             }
             if(emptyRunners > 1 && gtsUp > minT){
                 GTEntry maxEngine = GTs.get(0);
-                for (GTEntry g :GTs){
+        		gi = GTs.iterator();
+                while(gi.hasNext()) {
+                	GTEntry g = gi.next();
                     if(maxEngine.maxE > g.maxE && g.status == GTSTATUS.online){
                         maxEngine = g;
                     }
