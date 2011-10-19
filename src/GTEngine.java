@@ -33,7 +33,7 @@ public class GTEngine extends AbstractServer {
         maxC = max;
         tdir = new File(td);
         if (!tdir.exists()){
-            System.out.print(tdir.getName()+"does not exists. Creating....\n");
+            System.out.print(tdir.getName()+" does not exists. Creating....\n");
             if(!tdir.mkdir()){
                 System.out.print("Can not create "+tdir.getName()+". Exiting.");
                 return;
@@ -66,11 +66,12 @@ public class GTEngine extends AbstractServer {
             exitRoutine();
             return false;
         }
+        //TODO should i not be able to catch this here
     }
     
     
     private void UDPListen(){
-        UDPWorker u = new UDPWorker (uSock);
+        UDPWorker u = new UDPWorker ();
         u.start();
     }
     
@@ -155,6 +156,18 @@ public class GTEngine extends AbstractServer {
             return false;
         }
         return false;
+    }
+    
+    public void exitRoutine(){
+        time.cancel();
+        super.exitRoutine();
+        return;
+    }
+    
+    public void exitRoutineFail(){
+        time.cancel();
+        super.exitRoutineFail();
+        return;
     }
     
     
@@ -305,17 +318,17 @@ public class GTEngine extends AbstractServer {
      * Postconditions: Manages activate suspend msgs
      */
     private class UDPWorker extends Thread{
-        private DatagramSocket lSock;
         
-        public UDPWorker(DatagramSocket uSock) {
-            lSock = uSock;
+        public UDPWorker() {
         }
         
         public void run(){
             DatagramPacket in = null;
+
             while(true){
                 try {
-                    lSock.receive(in);
+                    uSock.receive(in);
+                    //TODO this throws nullPointer see UDPconnect()
                     if(in != null){
                         if(in.getData().toString().contains("!suspend")){
                             stopIsAlive();

@@ -296,15 +296,17 @@ public class Scheduler extends AbstractServer {
         
         public void run(){
             if(in == null){return;}//TODO do a nice msg
-        	for (GTEntry g : GTs){//TODO will this run on the first engine?
-                if (g.ip == in.getAddress().toString()){ 
-                    if(g.status != GTSTATUS.suspended){//ignore isAlives of suspended engines
-                        g.resetTimer();
-                        g.status = GTSTATUS.online;
-                        return;
-                    }
-                    else{
-                        return;
+            
+        	if (!GTs.isEmpty()) {
+                for (GTEntry g : GTs) {
+                    if (g.ip == in.getAddress().toString()) {
+                        if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
+                            g.resetTimer();
+                            g.status = GTSTATUS.online;
+                            return;
+                        } else {
+                            return;
+                        }
                     }
                 }
             }
@@ -424,7 +426,8 @@ public class Scheduler extends AbstractServer {
         private class Timeout extends TimerTask{
 
             public void run() {
-                status = GTSTATUS.offline;                
+                status = GTSTATUS.offline;
+                //TODO does this give me crap by happening out of sync?
             }
             
         }
