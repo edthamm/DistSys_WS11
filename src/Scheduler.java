@@ -18,7 +18,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 
-//TODO Cancel all timers they still continue executing
+
+//TODO Cancel all timers they still continue executing -- should be dealt with by is daemon
 public class Scheduler extends AbstractServer {
     
     private int uPort;
@@ -55,6 +56,12 @@ public class Scheduler extends AbstractServer {
         i.start();        
     }
     
+    public void tcpListen() throws IOException {
+        TCPListener l = new TCPListener();
+        l.start();
+        
+    }
+    
     public void readCompanies() throws FileNotFoundException{
         InputStream in = null;
         in = ClassLoader.getSystemResourceAsStream("company.properties");
@@ -87,7 +94,7 @@ public class Scheduler extends AbstractServer {
     }
     
     private void efficencyCheck(){
-        etime = new Timer();
+        etime = new Timer(true);
         etime.scheduleAtFixedRate(new ECheck(), checkP, checkP);
     }
     
@@ -164,7 +171,7 @@ public class Scheduler extends AbstractServer {
     // Client handling is done in worker.
     
 
-    @SuppressWarnings("unused")//called in superclass
+
     private class Worker extends AbstractServer.Worker{
 
         public Worker(Socket s) {
@@ -320,7 +327,7 @@ public class Scheduler extends AbstractServer {
         		Enumeration<GTEntry> gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
-                    if (g.ip == in.getAddress().toString()) {
+                    if (g.ip == in.getAddress().toString().substring(1)) {
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             g.resetTimer();
                             g.status = GTSTATUS.online;
@@ -338,7 +345,7 @@ public class Scheduler extends AbstractServer {
                 GTs.put(g.ip, g);//something is wrong here look at this
                 g.startTimer();
             } catch(NumberFormatException e){
-                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString()+" \n");
+                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString()+" \n");//cave no substring
                 if(DEBUG){e.printStackTrace();}
             }
             
@@ -430,7 +437,7 @@ public class Scheduler extends AbstractServer {
         }
         
         public void startTimer(){
-            time = new Timer();
+            time = new Timer(true);
             time.schedule(new Timeout(this), tout);
         }
         
@@ -440,7 +447,7 @@ public class Scheduler extends AbstractServer {
         
         public void resetTimer(){
             time.cancel(); //may be called repeatedly according to doc
-            time = new Timer();
+            time = new Timer(true);
             time.schedule(new Timeout(this), tout);
         }
         
@@ -476,6 +483,9 @@ public class Scheduler extends AbstractServer {
     }
     
     private class ECheck extends TimerTask{
+        
+        public ECheck(){
+        }
 
         public void run() {
             int highUsers = 0;
@@ -534,5 +544,27 @@ public class Scheduler extends AbstractServer {
             
         }
     }
+
+    private class TCPListener extends Thread{
+        public void run(){
+        try {
+            Ssock = new ServerSocket(Tport);
+        } catch (IOException e) {
+            System.out.print("Could not listen on port: " + Tport + "\n");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutineFail();
+        }
+        
+        while(true){
+            try {
+                abservexe.execute(new Worker(Ssock.accept()));
+            } catch (IOException e) {
+                if(DEBUG){e.printStackTrace();}
+                return;
+            }
+        }
+    }
+}
+
 
 }

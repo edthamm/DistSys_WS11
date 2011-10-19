@@ -11,17 +11,13 @@ import java.util.concurrent.Executors;
 
 public abstract class AbstractServer {
     
-    private ServerSocket Ssock = null;
-    private ExecutorService e = Executors.newCachedThreadPool();
+    protected ServerSocket Ssock = null;
+    protected ExecutorService e = Executors.newCachedThreadPool();
     protected int Tport;
     private final static boolean DEBUG = false;
     
     
-    public void tcpListen() throws IOException{
-        Listener l = new Listener();
-        l.start();
-
-    }
+    public abstract void tcpListen() throws IOException;
     
     public void exitRoutine(){
         e.shutdownNow();
@@ -46,30 +42,10 @@ public abstract class AbstractServer {
         return;
     }
     
-    protected class Listener extends Thread{
-        public void run(){
-            
-            try {
-                Ssock = new ServerSocket(Tport);
-            } catch (IOException e) {
-                System.out.print("Could not listen on port: " + Tport + "\n");
-                if(DEBUG){e.printStackTrace();}
-                exitRoutineFail();
-            }
-            
-            while(true){
-                try {
-                    e.execute(new Worker(Ssock.accept()));
-                } catch (IOException e) {
-                    if(DEBUG){e.printStackTrace();}
-                    return;
-                }
-            }
-        }
-        
+    protected abstract class TCPListener extends Thread{
     }
     
-    protected class Worker extends Thread{
+    protected abstract class Worker extends Thread{
         
         protected Socket Csock;
         
