@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 public abstract class AbstractServer {
     
     protected ServerSocket Ssock = null;
-    protected ExecutorService e = Executors.newCachedThreadPool();
+    protected ExecutorService abservexe = Executors.newCachedThreadPool();
     protected int Tport;
     private final static boolean DEBUG = false;
     
@@ -20,7 +20,7 @@ public abstract class AbstractServer {
     public abstract void tcpListen() throws IOException;
     
     public void exitRoutine(){
-        e.shutdownNow();
+        abservexe.shutdownNow();
         try {
             Ssock.close();
         } catch (IOException e1) {
@@ -31,7 +31,7 @@ public abstract class AbstractServer {
         return;
     }
     public void exitRoutineFail(){
-        e.shutdownNow();
+        abservexe.shutdownNow();
         try {
             Ssock.close();
         } catch (IOException e1) {
@@ -41,10 +41,7 @@ public abstract class AbstractServer {
         }
         return;
     }
-    
-    protected abstract class TCPListener extends Thread{
-    }
-    
+        
     protected abstract class Worker extends Thread{
         
         protected Socket Csock;

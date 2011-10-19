@@ -367,6 +367,32 @@ public class GTEngine extends AbstractServer {
         }
         
     }
+
+    public void tcpListen() throws IOException {
+        TCPListener l = new TCPListener();
+        l.start();
+        
+    }
     
+    private class TCPListener extends Thread{
+        public void run(){
+        try {
+            Ssock = new ServerSocket(Tport);
+        } catch (IOException e) {
+            System.out.print("Could not listen on port: " + Tport + "\n");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutineFail();
+        }
+        
+        while(true){
+            try {
+                abservexe.execute(new Worker(Ssock.accept()));
+            } catch (IOException e) {
+                if(DEBUG){e.printStackTrace();}
+                return;
+            }
+        }
+    }
+}
 
 }
