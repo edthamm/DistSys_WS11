@@ -12,10 +12,7 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.Enumeration;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,8 +30,8 @@ public class Scheduler extends AbstractServer {
     private Timer etime;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
-    private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//TODO this does not work maybe use concurenthashmap
-    private List<Company> Companies = Collections.synchronizedList(new LinkedList<Company>());
+    private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();//TODO this does not work maybe use concurenthashmap
+    private ConcurrentHashMap<String,Company> Companies = new ConcurrentHashMap<String,Company>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     private static final boolean DEBUG = false;
@@ -66,12 +63,13 @@ public class Scheduler extends AbstractServer {
             try {
                 companies.load(in);
                 Set<String> companyNames = companies.stringPropertyNames();
+                
                 for (String companyName : companyNames){
                     String password = companies.getProperty(companyName);
                     Company c = new Company();
                     c.name = companyName;
                     c.password = password;
-                    Companies.add(c);
+                    Companies.put(c.name, c);
                 }
                 
             } catch (IOException e) {
@@ -95,7 +93,9 @@ public class Scheduler extends AbstractServer {
     
     
     public boolean loggedIn(InetAddress in){
-        for(Company c : Companies){
+        Enumeration<Company> ce = Companies.elements();
+        while(ce.hasMoreElements()){
+        	Company c = ce.nextElement();
             if(c.via == in && c.line == COMPANYCONNECT.online){
                 return true;
             }
@@ -187,6 +187,7 @@ public class Scheduler extends AbstractServer {
         private String processInput(String input, InetAddress sender) {
             String[] in = input.split(" ");
             //TODO what if client dies set a timeout? ASK THIS
+            //TODO check for concurrent op on g
             if(!in[0].contains("!login") && !loggedIn(sender)){
                 return "Please log in first.";
             }
@@ -197,7 +198,9 @@ public class Scheduler extends AbstractServer {
                 if(g == null){
                     return "Not enough capacity. Try again later.";
                 }
-                for(Company c : Companies){
+                Enumeration<Company> ce = Companies.elements();
+                while(ce.hasMoreElements()){
+                	Company c = ce.nextElement();
                     if(c.via == sender){
                         if(in[2] == "HIGH"){
                             c.high++;
@@ -218,7 +221,9 @@ public class Scheduler extends AbstractServer {
                 
             }
             if(in[0].contentEquals("!login")){
-                for(Company c : Companies){
+                Enumeration<Company> ce = Companies.elements();
+                while(ce.hasMoreElements()){
+                	Company c = ce.nextElement();
                     if(in[1].contentEquals(c.name) && in[2].contentEquals(c.password) && c.line != COMPANYCONNECT.online){
                         c.via = sender;
                         return "Successfully logged in.";
@@ -228,7 +233,9 @@ public class Scheduler extends AbstractServer {
                 
             }
             if(in[0].contentEquals("!logout")){
-                for(Company c : Companies){
+                Enumeration<Company> ce = Companies.elements();
+                while(ce.hasMoreElements()){
+                	Company c = ce.nextElement();
                     if(c.via == sender){
                         c.line = COMPANYCONNECT.offline;
                         c.via = null;
@@ -299,9 +306,9 @@ public class Scheduler extends AbstractServer {
             if(in == null){return;}//TODO do a nice msg
             
         	if (!GTs.isEmpty()) {
-        		ListIterator<GTEntry> gi = GTs.listIterator();
-                while(gi.hasNext()) {
-                	GTEntry g = gi.next();
+        		Enumeration<GTEntry> gi = GTs.elements();
+                while(gi.hasMoreElements()) {
+                	GTEntry g = gi.nextElement();
                     if (g.ip == in.getAddress().toString()) {
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             g.resetTimer();
@@ -317,7 +324,7 @@ public class Scheduler extends AbstractServer {
             String rcv[] = inString.split(" ");
             try{
                 GTEntry g = new GTEntry(in.getAddress().toString(),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
-                GTs.add(g);
+                GTs.put(g.ip, g);
                 g.startTimer();
             } catch(NumberFormatException e){
                 System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString()+" \n");
@@ -355,9 +362,9 @@ public class Scheduler extends AbstractServer {
                 while((userin = stdin.readLine()) != null){
                     if(userin.contentEquals("!engines")){
                         int i = 1;
-                		ListIterator<GTEntry> gi = GTs.listIterator();
-                        while(gi.hasNext()) {
-                        	GTEntry g = gi.next();
+                        Enumeration<GTEntry> gi = GTs.elements();
+                        while(gi.hasMoreElements()) {
+                        	GTEntry g = gi.nextElement();
                             System.out.print(i+". "+g.toString());
                             i++;
                         }                    
@@ -365,7 +372,9 @@ public class Scheduler extends AbstractServer {
                     }
                     if(userin.contentEquals("!companies")){
                         int i = 1;
-                        for (Company c : Companies){
+                        Enumeration<Company> ce = Companies.elements();
+                        while(ce.hasMoreElements()){
+                        	Company c = ce.nextElement();
                             System.out.print(i+". "+c.toString());
                             i++;
                         }
@@ -435,7 +444,7 @@ public class Scheduler extends AbstractServer {
         	}
 
             public void run() {
-                GTs.get(GTs.indexOf(g)).status=GTSTATUS.offline;
+                GTs.get(g.ip).status=GTSTATUS.offline;
             }
             
         }
@@ -461,9 +470,9 @@ public class Scheduler extends AbstractServer {
             int highUsers = 0;
             int emptyRunners = 0;
             int gtsUp = 0;
-    		ListIterator<GTEntry> gi = GTs.listIterator();
-            while(gi.hasNext()) {
-            	GTEntry g = gi.next();
+            Enumeration<GTEntry> gi = GTs.elements();
+            while(gi.hasMoreElements()) {
+            	GTEntry g = gi.nextElement();
                 if(g.status == GTSTATUS.online){
                     gtsUp++;
                     if(g.load == 0){
@@ -478,9 +487,9 @@ public class Scheduler extends AbstractServer {
                 // no engine <66 load up and less than max engines active and inactive engines exist
                 // active smaller min and suspended available
                 GTEntry minEngine = GTs.get(0);
-        		gi = GTs.listIterator();
-                while(gi.hasNext()) {
-                	GTEntry g = gi.next();
+                gi = GTs.elements();
+                while(gi.hasMoreElements()) {
+                	GTEntry g = gi.nextElement();
                     if(minEngine.minE < g.minE && g.status == GTSTATUS.suspended){
                         minEngine = g;
                     }
@@ -490,9 +499,9 @@ public class Scheduler extends AbstractServer {
             }
             if(emptyRunners > 1 && gtsUp > minT){
                 GTEntry maxEngine = GTs.get(0);
-        		gi = GTs.listIterator();
-                while(gi.hasNext()) {
-                	GTEntry g = gi.next();
+                gi = GTs.elements();
+                while(gi.hasMoreElements()) {
+                	GTEntry g = gi.nextElement();
                     if(maxEngine.maxE > g.maxE && g.status == GTSTATUS.online){
                         maxEngine = g;
                     }
@@ -504,13 +513,13 @@ public class Scheduler extends AbstractServer {
         
         private void suspend(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!suspend");
-            GTs.get(GTs.indexOf(g)).status = GTSTATUS.suspended;
+            GTs.get(g.ip).status = GTSTATUS.suspended;
             g.stopTimer();
         }
         
         private void activate(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!wakeUp");
-            GTs.get(GTs.indexOf(g)).status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
+            GTs.get(g.ip).status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
             
         }
     }
