@@ -18,7 +18,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 
-
+//TODO Cancel all timers they still continue executing
 public class Scheduler extends AbstractServer {
     
     private int uPort;
@@ -30,11 +30,11 @@ public class Scheduler extends AbstractServer {
     private Timer etime;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
-    private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();//TODO this does not work maybe use concurenthashmap
+    private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();
     private ConcurrentHashMap<String,Company> Companies = new ConcurrentHashMap<String,Company>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
         Tport = tcpPort;
@@ -109,6 +109,7 @@ public class Scheduler extends AbstractServer {
         contE.shutdownNow();
         if(uSock != null){uSock.close();}
         etime.cancel();
+        cancelGETimer();
         super.exitRoutine();
     }
     
@@ -117,6 +118,16 @@ public class Scheduler extends AbstractServer {
         if(uSock != null){uSock.close();}
         etime.cancel();
         super.exitRoutineFail();
+    }
+    
+    private void cancelGETimer(){
+    	if (!GTs.isEmpty()) {
+    		Enumeration<GTEntry> gi = GTs.elements();
+            while(gi.hasMoreElements()) {
+            	GTEntry g = gi.nextElement();
+            	g.stopTimer();
+            }	
+        }
     }
 
     
@@ -323,8 +334,8 @@ public class Scheduler extends AbstractServer {
             String inString = new String(in.getData(), 0, in.getLength());
             String rcv[] = inString.split(" ");
             try{
-                GTEntry g = new GTEntry(in.getAddress().toString(),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
-                GTs.put(g.ip, g);
+                GTEntry g = new GTEntry(in.getAddress().toString().substring(1),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
+                GTs.put(g.ip, g);//something is wrong here look at this
                 g.startTimer();
             } catch(NumberFormatException e){
                 System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString()+" \n");
@@ -399,13 +410,13 @@ public class Scheduler extends AbstractServer {
         
     }
     private class GTEntry{
-        private String ip;
-        private int tcp;
-        private int udp;
+        private String ip = "";
+        private int tcp = 0;
+        private int udp = 0;
         private GTSTATUS status;
-        private int minE;
-        private int maxE;
-        private int load;
+        private int minE = 0;
+        private int maxE = 0;
+        private int load = 0;
         Timer time;
         
         public GTEntry(String ip, int tcp, int udp, GTSTATUS status, int minE, int maxE , int load){
@@ -483,10 +494,10 @@ public class Scheduler extends AbstractServer {
                     }
                 }
             }
-            if((highUsers == gtsUp && gtsUp < maxT && gtsUp < GTs.size()) || (gtsUp < minT && gtsUp < GTs.size())){
+            if(!GTs.isEmpty() && (highUsers == gtsUp && gtsUp < maxT && gtsUp < GTs.size()) || (gtsUp < minT && gtsUp < GTs.size())){
                 // no engine <66 load up and less than max engines active and inactive engines exist
                 // active smaller min and suspended available
-                GTEntry minEngine = GTs.get(0);
+                GTEntry minEngine = GTs.elements().nextElement();//the first element
                 gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
@@ -498,7 +509,7 @@ public class Scheduler extends AbstractServer {
                 //worst case first engine and that is offline well s happens
             }
             if(emptyRunners > 1 && gtsUp > minT){
-                GTEntry maxEngine = GTs.get(0);
+                GTEntry maxEngine = GTs.elements().nextElement();
                 gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
