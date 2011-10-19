@@ -36,7 +36,7 @@ public class GTEngine extends AbstractServer {
             System.out.print(tdir.getName()+" does not exists. Creating....\n");
             if(!tdir.mkdir()){
                 System.out.print("Can not create "+tdir.getName()+". Exiting.\n");
-                return;
+                return;//TODO exitRoutine
             }
             
         }
@@ -324,7 +324,7 @@ public class GTEngine extends AbstractServer {
         public void run(){
             DatagramPacket in = new DatagramPacket(new byte[1024], 0);//TODO check what this actually does
 
-            while(true){
+            while(true){//TODO set termination flag
                 try {
                     uSock.receive(in);
                     if(in != null){

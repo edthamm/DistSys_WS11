@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,7 +34,7 @@ public class Scheduler extends AbstractServer {
     private Timer etime;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
-    private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());
+    private List<GTEntry> GTs = Collections.synchronizedList(new LinkedList<GTEntry>());//TODO this does not work maybe use concurenthashmap
     private List<Company> Companies = Collections.synchronizedList(new LinkedList<Company>());
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
@@ -299,7 +300,7 @@ public class Scheduler extends AbstractServer {
             if(in == null){return;}//TODO do a nice msg
             
         	if (!GTs.isEmpty()) {
-        		Iterator<GTEntry> gi = GTs.iterator();
+        		ListIterator<GTEntry> gi = GTs.listIterator();
                 while(gi.hasNext()) {
                 	GTEntry g = gi.next();
                     if (g.ip == in.getAddress().toString()) {
@@ -355,7 +356,7 @@ public class Scheduler extends AbstractServer {
                 while((userin = stdin.readLine()) != null){
                     if(userin.contentEquals("!engines")){
                         int i = 1;
-                		Iterator<GTEntry> gi = GTs.iterator();
+                		ListIterator<GTEntry> gi = GTs.listIterator();
                         while(gi.hasNext()) {
                         	GTEntry g = gi.next();
                             System.out.print(i+". "+g.toString());
@@ -461,7 +462,7 @@ public class Scheduler extends AbstractServer {
             int highUsers = 0;
             int emptyRunners = 0;
             int gtsUp = 0;
-    		Iterator<GTEntry> gi = GTs.iterator();
+    		ListIterator<GTEntry> gi = GTs.listIterator();
             while(gi.hasNext()) {
             	GTEntry g = gi.next();
                 if(g.status == GTSTATUS.online){
@@ -478,7 +479,7 @@ public class Scheduler extends AbstractServer {
                 // no engine <66 load up and less than max engines active and inactive engines exist
                 // active smaller min and suspended available
                 GTEntry minEngine = GTs.get(0);
-        		gi = GTs.iterator();
+        		gi = GTs.listIterator();
                 while(gi.hasNext()) {
                 	GTEntry g = gi.next();
                     if(minEngine.minE < g.minE && g.status == GTSTATUS.suspended){
@@ -490,7 +491,7 @@ public class Scheduler extends AbstractServer {
             }
             if(emptyRunners > 1 && gtsUp > minT){
                 GTEntry maxEngine = GTs.get(0);
-        		gi = GTs.iterator();
+        		gi = GTs.listIterator();
                 while(gi.hasNext()) {
                 	GTEntry g = gi.next();
                     if(maxEngine.maxE > g.maxE && g.status == GTSTATUS.online){
@@ -504,13 +505,13 @@ public class Scheduler extends AbstractServer {
         
         private void suspend(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!suspend");
-            g.status = GTSTATUS.suspended;
+            GTs.get(GTs.indexOf(g)).status = GTSTATUS.suspended;
             g.stopTimer();
         }
         
         private void activate(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!wakeUp");
-            g.status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
+            GTs.get(GTs.indexOf(g)).status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
             
         }
     }
