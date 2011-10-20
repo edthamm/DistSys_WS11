@@ -19,7 +19,6 @@ import java.util.TimerTask;
 import java.util.concurrent.*;
 
 
-//TODO Cancel all timers they still continue executing -- should be dealt with by is daemon
 public class Scheduler extends AbstractServer {
     
     private int uPort;
@@ -35,7 +34,7 @@ public class Scheduler extends AbstractServer {
     private ConcurrentHashMap<String,Company> Companies = new ConcurrentHashMap<String,Company>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     
     public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
         Tport = tcpPort;
@@ -99,11 +98,11 @@ public class Scheduler extends AbstractServer {
     }
     
     
-    public boolean loggedIn(InetAddress in){
+    public boolean loggedIn(String ip){
         Enumeration<Company> ce = Companies.elements();
         while(ce.hasMoreElements()){
         	Company c = ce.nextElement();
-            if(c.via == in && c.line == COMPANYCONNECT.online){
+            if(c.via == ip && c.line == COMPANYCONNECT.online){
                 return true;
             }
         }
@@ -177,7 +176,7 @@ public class Scheduler extends AbstractServer {
         public Worker(Socket s) {
             super(s);
         }
-        
+        //TODO Check if get address is fucked up here to
         public void run(){
             try{
                 PrintWriter out = new PrintWriter(Csock.getOutputStream());
@@ -186,8 +185,9 @@ public class Scheduler extends AbstractServer {
                 String input, output;
                 
                 while((input = in.readLine()) != null){
-                    output = processInput(input,Csock.getInetAddress());
+                    output = processInput(input,Csock.getInetAddress().toString().substring(1));
                     out.println(output);
+                    out.flush();
                 }
                 in.close();
                 out.close();
@@ -202,11 +202,11 @@ public class Scheduler extends AbstractServer {
  *  Preconditions: Client ensures that in !requestEngine only HIGH,MIDDLE,LOW are allowed on in[2], Companies not null
  *  Postconditions:
  */
-        private String processInput(String input, InetAddress sender) {
+        private String processInput(String input, String ip) {
             String[] in = input.split(" ");
-            //TODO what if client dies set a timeout? ASK THIS
+            //what if client dies set a timeout? answer bad luck have to wait for shed reboot
             //TODO check for concurrent op on g
-            if(!in[0].contains("!login") && !loggedIn(sender)){
+            if(!in[0].contains("!login") && !loggedIn(ip)){
                 return "Please log in first.";
             }
 
@@ -219,10 +219,10 @@ public class Scheduler extends AbstractServer {
                 Enumeration<Company> ce = Companies.elements();
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
-                    if(c.via == sender){
+                    if(c.via == ip){
                         if(in[2] == "HIGH"){
                             c.high++;
-                            g.load = 100; //a high task will give 100% load but += would give more due to base load.
+                            g.load = 100; 
                         }
                         if(in[2] == "MIDDLE"){
                             c.middle++;
@@ -243,7 +243,8 @@ public class Scheduler extends AbstractServer {
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
                     if(in[1].contentEquals(c.name) && in[2].contentEquals(c.password) && c.line != COMPANYCONNECT.online){
-                        c.via = sender;
+                        c.via = ip;
+                        c.line = COMPANYCONNECT.online;
                         return "Successfully logged in.";
                     }
                     return"Wrong company or password.";
@@ -254,7 +255,7 @@ public class Scheduler extends AbstractServer {
                 Enumeration<Company> ce = Companies.elements();
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
-                    if(c.via == sender){
+                    if(c.via == ip){
                         c.line = COMPANYCONNECT.offline;
                         c.via = null;
                         break;
@@ -299,9 +300,7 @@ public class Scheduler extends AbstractServer {
                 } 
                 catch (IOException e) {
                     if(DEBUG){e.printStackTrace();}
-                    return;
-                
-                    
+                    return;    
                 }
             }
         }
@@ -469,7 +468,7 @@ public class Scheduler extends AbstractServer {
     }
     
     private class Company{
-        private InetAddress via = null;
+        private String via = "";
         private String name = null;
         private String password = null; //this is inherently unsafe in production use encryption
         private COMPANYCONNECT line = COMPANYCONNECT.offline;

@@ -18,6 +18,7 @@ public class GTEngine extends AbstractServer {
     private int isAl;
     private int minC;
     private int maxC;
+    private boolean terminate = false;
     private volatile int load = 0;//Load needs to be threadsafe volatile should suffice according to JLS 17.4.3 and 17.7
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
     private final static boolean DEBUG = false;
@@ -36,7 +37,7 @@ public class GTEngine extends AbstractServer {
             System.out.print(tdir.getName()+" does not exists. Creating....\n");
             if(!tdir.mkdir()){
                 System.out.print("Can not create "+tdir.getName()+". Exiting.\n");
-                return;//TODO exitRoutine
+                exitRoutine();
             }
             
         }
@@ -158,13 +159,17 @@ public class GTEngine extends AbstractServer {
     }
     
     public void exitRoutine(){
+        terminate = true;
         time.cancel();
+        uSock.close();
         super.exitRoutine();
         return;
     }
     
     public void exitRoutineFail(){
+        terminate = true;
         time.cancel();
+        uSock.close();
         super.exitRoutineFail();
         return;
     }
@@ -202,7 +207,6 @@ public class GTEngine extends AbstractServer {
     }
     
     
-    @SuppressWarnings("unused")//called by superclass
     private class Worker extends AbstractServer.Worker{
         
         
@@ -223,6 +227,13 @@ public class GTEngine extends AbstractServer {
                 
                 //Receive all parameters. 
                 execln = textin.readLine();
+                if(execln.contentEquals("!Load")){//handle load requests
+                    PrintWriter toSc = new PrintWriter(Csock.getOutputStream());
+                    toSc.println(load);
+                    toSc.flush();
+                    Csock.close();
+                    return;
+                }
                 tid = textin.readLine();
                 tname = textin.readLine();
                 ttype = textin.readLine();
@@ -269,6 +280,8 @@ public class GTEngine extends AbstractServer {
                     p.destroy();
                     downLoad(ttype);
                 }
+                toCl.println("Finished Task "+tid);
+                toCl.flush();
                 toCl.close();
                 Csock.close();
                 f.delete();
@@ -324,7 +337,7 @@ public class GTEngine extends AbstractServer {
         public void run(){
             DatagramPacket in = new DatagramPacket(new byte[1024], 0);//TODO check what this actually does
 
-            while(true){//TODO set termination flag
+            while(!terminate){
                 try {
                     uSock.receive(in);
                     if(in != null){
@@ -337,7 +350,7 @@ public class GTEngine extends AbstractServer {
                     }
                 } catch (IOException e) {
                     if(DEBUG){e.printStackTrace();}
-                    System.out.println("Error recieving UDP Massages from Scheduler.");
+                    System.out.println("Error recieving UDP Massages from Scheduler I/O.");
                 }
                 
             }
