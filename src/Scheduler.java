@@ -26,7 +26,8 @@ public class Scheduler extends AbstractServer {
     private int maxT;
     private int tout;
     private int checkP;
-    private int BUFSIZE = 1024;
+    private static final int BUFSIZE = 1024;
+    private static final int MAXCOEF = 1024;
     private Timer etime;
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
@@ -84,12 +85,40 @@ public class Scheduler extends AbstractServer {
                 if(DEBUG){e.printStackTrace();}
             }
         }
+        else{
+            throw new FileNotFoundException();
+        }
     }
     
     public GTEntry schedule(String t){//String is load.
+        int load = 0;
+        int coef = MAXCOEF;
+        GTEntry gc = null;
+        GTEntry g = null;
         
-        //TODO logic
-        return null;
+        if(t.contentEquals("LOW")){
+            load = 33;
+        }
+        if(t.contentEquals("MIDDLE")){
+            load = 66;
+        }
+        if(t.contentEquals("HIGH")){
+            load = 100;
+        }
+        if(load == 0 || GTs.isEmpty()){
+            return g;
+        }
+        
+        Enumeration<GTEntry> ge = GTs.elements();
+        while(ge.hasMoreElements()){
+            gc = ge.nextElement();
+            if((gc.load+load) < 101 && (gc.maxE -gc.minE) < coef){
+                g = gc;
+                coef = gc.maxE -gc.minE;
+            }
+        }
+        
+        return g;
     }
     
     private void efficencyCheck(){
@@ -148,7 +177,6 @@ public class Scheduler extends AbstractServer {
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
             
             sched.readCompanies();
-            //TODO catch fnf throw on in == null
             sched.inputListen();
             sched.control();
             sched.tcpListen();
@@ -156,7 +184,9 @@ public class Scheduler extends AbstractServer {
             
             
         } catch (IOException e) {
+            System.out.println("Ran in to an I/O Problem. Most likely Some config file is missing.");
             if(DEBUG){e.printStackTrace();}
+            return;
         }
           catch(NumberFormatException e){
             System.out.print(usage + "All values must be integers.\n");
@@ -176,7 +206,6 @@ public class Scheduler extends AbstractServer {
         public Worker(Socket s) {
             super(s);
         }
-        //TODO Check if get address is fucked up here to
         public void run(){
             try{
                 PrintWriter out = new PrintWriter(Csock.getOutputStream());
@@ -205,7 +234,6 @@ public class Scheduler extends AbstractServer {
         private String processInput(String input, String ip) {
             String[] in = input.split(" ");
             //what if client dies set a timeout? answer bad luck have to wait for shed reboot
-            //TODO check for concurrent op on g
             if(!in[0].contains("!login") && !loggedIn(ip)){
                 return "Please log in first.";
             }
@@ -220,6 +248,7 @@ public class Scheduler extends AbstractServer {
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
                     if(c.via == ip){
+                        //TODO check for concurrent op on g
                         if(in[2] == "HIGH"){
                             c.high++;
                             g.load = 100; 
