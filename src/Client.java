@@ -84,7 +84,7 @@ public class Client {
      * Preconditions: user input received
      * Postconditions: user input processed and handling function called accordingly
      */
-    private boolean checkAction(String[] in) throws NumberFormatException{
+    private boolean checkAction(String[] in) throws NumberFormatException, IOException{
         
         if(in[0].contentEquals("!login")){
             if(in.length != 3){
@@ -179,7 +179,7 @@ public class Client {
      * Preconditions: none
      * Postconditions: new task with unique taskid prepared
      */
-    private void prepare(String task, String type){
+    private void prepare(String task, String type) throws IOException{
         TASKTYPE typ = null;
         if(type.contentEquals("LOW")){
             typ = TASKTYPE.LOW;
@@ -200,7 +200,7 @@ public class Client {
                 }
             }
         }
-        //TODO retest and maybe add +"/"+
+        //TODO retest and maybe add +"/"
         File f = new File(tdir.getAbsolutePath()+task);
         if(!f.exists()){
             System.out.print("No such file exists: "+f.getAbsolutePath()+"\n");
