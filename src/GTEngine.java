@@ -21,7 +21,7 @@ public class GTEngine extends AbstractServer {
     private boolean terminate = false;
     private volatile int load = 0;//Load needs to be threadsafe volatile should suffice according to JLS 17.4.3 and 17.7
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
-    private final static boolean DEBUG = false;
+    private final static boolean DEBUG = true;
     private DatagramSocket uSock = null;
     private Timer time = new Timer();;
     
@@ -224,6 +224,7 @@ public class GTEngine extends AbstractServer {
             try {
                 BufferedReader textin = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
                 DataInputStream datain= new DataInputStream(Csock.getInputStream());
+                PrintWriter toCl = new PrintWriter(Csock.getOutputStream());
                 
                 //Receive all parameters. 
                 execln = textin.readLine();
@@ -251,6 +252,8 @@ public class GTEngine extends AbstractServer {
                 byte[] ba = new byte[(int) flength];
                 FileOutputStream fos = new FileOutputStream(f);
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
+                toCl.println("Send");
+                toCl.flush();
                 datain.read(ba, 0, ba.length);
                 
                 bos.write(ba);
@@ -259,7 +262,7 @@ public class GTEngine extends AbstractServer {
                 fos.close();
                 
                 
-                PrintWriter toCl = new PrintWriter(Csock.getOutputStream());
+                
                 if(!upLoad(ttype)){
                     toCl.println(tid+" Not enough capacity. Try again later.");
                 }

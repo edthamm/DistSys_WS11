@@ -136,7 +136,7 @@ public class Scheduler extends AbstractServer {
         while(ge.hasMoreElements()){
             g = ge.nextElement();
             try {
-                es.equals(new LWorker(new Socket(g.ip,g.tcp),g));
+                es.execute(new LWorker(new Socket(g.ip,g.tcp),g));
             } catch (UnknownHostException e) {
                 if(DEBUG){e.printStackTrace();}
             } catch (IOException e) {
@@ -153,7 +153,7 @@ public class Scheduler extends AbstractServer {
         Enumeration<Company> ce = Companies.elements();
         while(ce.hasMoreElements()){
         	Company c = ce.nextElement();
-            if(c.via == ip && c.line == COMPANYCONNECT.online){
+            if(c.via.contains(ip) && c.line == COMPANYCONNECT.online){
                 return true;
             }
         }
@@ -224,7 +224,7 @@ public class Scheduler extends AbstractServer {
 
 
     private class Worker extends AbstractServer.Worker{
-
+        //TODO Deamonize
         public Worker(Socket s) {
             super(s);
         }
@@ -296,9 +296,9 @@ public class Scheduler extends AbstractServer {
                         c.via = ip;
                         c.line = COMPANYCONNECT.online;
                         return "Successfully logged in.";
-                    }
-                    return"Wrong company or password.";
+                    }  
                 }
+                return"Wrong company or password.";
                 
             }
             if(in[0].contentEquals("!logout")){
@@ -338,6 +338,7 @@ public class Scheduler extends AbstractServer {
                 BufferedReader sin = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
                 
                 sout.println("!Load");
+                sout.flush();
                 GTs.get(g.ip).load = Integer.parseInt(sin.readLine());
                 
                 sin.close();
@@ -433,7 +434,7 @@ public class Scheduler extends AbstractServer {
                 GTs.put(g.ip, g);//something is wrong here look at this
                 g.startTimer();
             } catch(NumberFormatException e){
-                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString()+" \n");//cave no substring
+                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString().substring(1)+" \n");//cave no substring
                 if(DEBUG){e.printStackTrace();}
             }
             
@@ -558,8 +559,8 @@ public class Scheduler extends AbstractServer {
     
     private class Company{
         private String via = "";
-        private String name = null;
-        private String password = null; //this is inherently unsafe in production use encryption
+        private String name = "";
+        private String password = ""; //this is inherently unsafe in production use encryption
         private COMPANYCONNECT line = COMPANYCONNECT.offline;
         private int low = 0;
         private int middle = 0;

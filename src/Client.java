@@ -124,6 +124,7 @@ public class Client {
                 return false;
             } 
             executeTask(Integer.parseInt(in[1]),in[2]);
+            //TODO startscript conains spaces dumbass
            return false; 
         }
         if(in[0].contentEquals("!info")){
@@ -244,6 +245,7 @@ public class Client {
         Socket tsock = null;
         PrintWriter tout = null;
         DataOutputStream dout = null;
+        BufferedReader tin = null;
         
         Task t = getTask(id);
         if(t == null){
@@ -269,13 +271,13 @@ public class Client {
         }
         
         try {
-            Listener L = new Listener(tsock, new BufferedReader(new InputStreamReader(tsock.getInputStream())));
-            L.start();
+            tin = new BufferedReader(new InputStreamReader(tsock.getInputStream()));
         } catch (IOException e) {
             System.out.print("Could not listen for replay from Task Engine.\n");
             if(DEBUG){e.printStackTrace();}
             return;
         }
+    
         File f = new File(tdir.getAbsolutePath()+t.name);
         //Transmit the command string string.
         //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
@@ -285,8 +287,18 @@ public class Client {
         tout.println(t.type.toString());
         tout.println(f.length());
         tout.flush();
+        try {
+            tin.readLine(); //this is for sync; a Send will be received maybe useful for later implementations
+        } catch (IOException e1) {
+            if(DEBUG){e1.printStackTrace();}
+        }
         
         
+        
+
+        Listener L = new Listener(tsock, tin);
+        L.start();
+
         
         byte[] ba = new byte[(int) f.length()];  //this is not great but it works
         try {
@@ -450,8 +462,8 @@ public class Client {
                 }
                 if(rcv.contains("Finished Task")){
                     String rs[] = rcv.split(" ");
-                    taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.finished;
-                    //TODO Check this might not work. Maybe add close to tsock here
+                    taskList.get(Integer.parseInt(rs[2])-1).status = TASKSTATE.finished;
+                    //TODO Check this does not work. Maybe add close to tsock here; 
                     return;
                 }
                 if(!rcv.contentEquals("")){
