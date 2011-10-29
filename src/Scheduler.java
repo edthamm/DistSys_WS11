@@ -90,7 +90,7 @@ public class Scheduler extends AbstractServer {
         }
     }
     
-    public GTEntry schedule(String t){//String is load.
+    private GTEntry schedule(String t){//String is load.
         int load = 0;
         int coef = MAXCOEF;
         GTEntry gc = null;
@@ -109,6 +109,8 @@ public class Scheduler extends AbstractServer {
             return g;
         }
         
+        updateLoads();
+
         Enumeration<GTEntry> ge = GTs.elements();
         while(ge.hasMoreElements()){
             gc = ge.nextElement();
@@ -124,6 +126,26 @@ public class Scheduler extends AbstractServer {
     private void efficencyCheck(){
         etime = new Timer(true);
         etime.scheduleAtFixedRate(new ECheck(), checkP, checkP);
+    }
+    
+    private void updateLoads(){
+        Enumeration<GTEntry> ge = GTs.elements();
+        ExecutorService es = Executors.newCachedThreadPool();
+        GTEntry g;
+        
+        while(ge.hasMoreElements()){
+            g = ge.nextElement();
+            try {
+                es.equals(new LWorker(new Socket(g.ip,g.tcp),g));
+            } catch (UnknownHostException e) {
+                if(DEBUG){e.printStackTrace();}
+            } catch (IOException e) {
+                if(DEBUG){e.printStackTrace();}
+            }
+            //TODO maybe do err msgs
+        }
+        return;
+
     }
     
     
@@ -248,18 +270,17 @@ public class Scheduler extends AbstractServer {
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
                     if(c.via == ip){
-                        //TODO check for concurrent op on g
                         if(in[2] == "HIGH"){
                             c.high++;
-                            g.load = 100; 
+                            GTs.get(g.ip).load = 100;
                         }
                         if(in[2] == "MIDDLE"){
                             c.middle++;
-                            g.load += 66;
+                            GTs.get(g.ip).load += 66;
                         }
                         if(in[2] == "LOW"){
                             c.low++;
-                            g.load += 33;
+                            GTs.get(g.ip).load += 33;
                         }
                     }
                 }
@@ -300,10 +321,46 @@ public class Scheduler extends AbstractServer {
     }
         
     
+    
+    
+    
+    private class LWorker extends AbstractServer.Worker{
+        GTEntry g;
+        
+        LWorker(Socket s, GTEntry gt){
+            super(s);
+            g = gt;
+        }
+        
+        public void run(){
+            try {
+                PrintWriter sout = new PrintWriter(Csock.getOutputStream(), true);
+                BufferedReader sin = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
+                
+                sout.println("!Load");
+                GTs.get(g.ip).load = Integer.parseInt(sin.readLine());
+                
+                sin.close();
+                sout.close();
+                Csock.close();
+                return;
+                
+            } 
+              catch (IOException e) {
+                if(DEBUG){e.printStackTrace();}
+                return;
+              }
+              catch (NumberFormatException e){
+                  System.out.println("Recieved a non number value from TE" + g.ip);
+                  if(DEBUG){e.printStackTrace();}
+                  return;
+              }
+        }
+    }
+   
+    
     //udp controlling of GTEs is done here
     
-    
-
     private class Controller extends Thread{
         byte[] buf = new byte[BUFSIZE];
         private DatagramPacket in = new DatagramPacket(buf, buf.length);
@@ -349,7 +406,10 @@ public class Scheduler extends AbstractServer {
         }
         
         public void run(){
-            if(in == null){return;}//TODO do a nice msg
+            if(in == null){
+                System.out.println("Something with handing the Datagram to the worker went wrong. He recieved NULL.");
+                return;
+            }
             
         	if (!GTs.isEmpty()) {
         		Enumeration<GTEntry> gi = GTs.elements();
