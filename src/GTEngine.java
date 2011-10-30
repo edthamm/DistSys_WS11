@@ -21,7 +21,7 @@ public class GTEngine extends AbstractServer {
     private boolean terminate = false;
     private volatile int load = 0;//Load needs to be threadsafe volatile should suffice according to JLS 17.4.3 and 17.7
     private final static String usage = "Usage GTEngine tcpPort schedulerHost schedulerUDPPort alivePeriod minComsumption maxConsumption taskDir";
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
     private DatagramSocket uSock = null;
     private Timer time = new Timer();;
     
@@ -269,7 +269,7 @@ public class GTEngine extends AbstractServer {
                 else{
                     //Replace name in cmd string.
                     String rpl = tname+num;
-                    execln.replace(tname.substring(2), rpl);//TODO This does not replace!!!
+                    execln.replace(tname, rpl);//TODO This does not replace!!! whats the problem here
                     //fork and pipe stdout to sock
                     Process p = Runtime.getRuntime().exec(execln, null, tdir);
                     BufferedReader pin = new BufferedReader(

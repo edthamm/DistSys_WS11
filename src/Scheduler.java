@@ -168,6 +168,7 @@ public class Scheduler extends AbstractServer {
         etime.cancel();
         cancelGETimer();
         super.exitRoutine();
+        //TODO log out all clients
     }
     
     public void exitRoutineFail(){
@@ -267,19 +268,18 @@ public class Scheduler extends AbstractServer {
                     return "Not enough capacity. Try again later.";
                 }
                 Enumeration<Company> ce = Companies.elements();
-                //TODO check this does not work
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
-                    if(c.via == ip){
-                        if(in[2] == "HIGH"){
+                    if(c.via.contentEquals(ip)){
+                        if(in[2].contains("HIGH")){
                             c.high++;
                             GTs.get(g.ip).load = 100;
                         }
-                        if(in[2] == "MIDDLE"){
+                        if(in[2].contains("MIDDLE")){
                             c.middle++;
                             GTs.get(g.ip).load += 66;
                         }
-                        if(in[2] == "LOW"){
+                        if(in[2].contains("LOW")){
                             c.low++;
                             GTs.get(g.ip).load += 33;
                         }
@@ -412,12 +412,14 @@ public class Scheduler extends AbstractServer {
                 System.out.println("Something with handing the Datagram to the worker went wrong. He recieved NULL.");
                 return;
             }
-            
+            try{
+            String inString = new String(in.getData(), 0, in.getLength());
+            String rcv[] = inString.split(" ");
         	if (!GTs.isEmpty()) {
         		Enumeration<GTEntry> gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
-                    if (g.ip == in.getAddress().toString().substring(1)) {
+                    if (g.ip == in.getAddress().toString().substring(1) && g.tcp == Integer.parseInt(rcv[0])) {//TODO problem with same IP , should be solved now
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             g.resetTimer();
                             g.status = GTSTATUS.online;
@@ -428,14 +430,12 @@ public class Scheduler extends AbstractServer {
                     }
                 }
             }
-            String inString = new String(in.getData(), 0, in.getLength());
-            String rcv[] = inString.split(" ");
-            try{
-                GTEntry g = new GTEntry(in.getAddress().toString().substring(1),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
-                GTs.put(g.ip, g);//something is wrong here look at this
-                g.startTimer();
+            //engine unknown make new
+            GTEntry g = new GTEntry(in.getAddress().toString().substring(1),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
+            GTs.put(g.ip, g);//TODO something is wrong here look at this most likely same key problem; think about key
+            g.startTimer();
             } catch(NumberFormatException e){
-                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString().substring(1)+" \n");//cave no substring
+                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString().substring(1)+" \n");
                 if(DEBUG){e.printStackTrace();}
             }
             
