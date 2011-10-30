@@ -371,6 +371,7 @@ public class Client {
      */
     private void exit(){
         System.out.print("Exiting on request. Good Bye!\n");
+        logout();
         e.shutdownNow();
         closeSchedulerConnection();
     }

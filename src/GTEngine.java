@@ -271,15 +271,15 @@ public class GTEngine extends AbstractServer {
                     String rpl = tname+num;
                     execln.replace(tname.substring(2), rpl);//TODO This does not replace!!!
                     //fork and pipe stdout to sock
-                    Process p = Runtime.getRuntime().exec(execln);
+                    Process p = Runtime.getRuntime().exec(execln, null, tdir);
                     BufferedReader pin = new BufferedReader(
                             new InputStreamReader(p.getInputStream()));
                     
                     String in;
                     while ((in = pin.readLine()) != null) {
                         toCl.println("Task " + tid + ": " + in);
+                        toCl.flush();
                     }
-                    //TODO why do I only get error output
                     //clean up
                     pin.close();
                     p.destroy();
