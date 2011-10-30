@@ -242,10 +242,10 @@ public class GTEngine extends AbstractServer {
                 
                 //Find free filename and create the file 
                 int num = 0;
-                while(new File(tdir.getAbsolutePath()+tname+num).exists()){
+                while(new File(tdir.getAbsolutePath()+tname+num).exists()){//TODO maybe add file.seperator
                     num++;
                 }
-                File f = new File(tdir.getAbsolutePath()+tname+num);
+                File f = new File(tdir.getAbsolutePath()+tname+num);//TODO see above
                 f.createNewFile();
                 
                 //Receive the file
@@ -269,7 +269,7 @@ public class GTEngine extends AbstractServer {
                 else{
                     //Replace name in cmd string.
                     String rpl = tname+num;
-                    execln.replace(tname, rpl);//TODO This does not replace!!! whats the problem here
+                    execln.replace(tname, rpl);//TODO This does not replace!!! What's the problem here
                     //fork and pipe stdout to sock
                     Process p = Runtime.getRuntime().exec(execln, null, tdir);
                     BufferedReader pin = new BufferedReader(

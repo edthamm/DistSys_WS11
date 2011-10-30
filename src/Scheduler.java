@@ -306,7 +306,7 @@ public class Scheduler extends AbstractServer {
                 Enumeration<Company> ce = Companies.elements();
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
-                    if(c.via == ip){
+                    if(c.via.contains(ip)){
                         c.line = COMPANYCONNECT.offline;
                         c.via = null;
                         break;

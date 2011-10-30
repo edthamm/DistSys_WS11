@@ -209,7 +209,7 @@ public class Client {
             }
         }
         //TODO retest and maybe add +"/"
-        File f = new File(tdir.getAbsolutePath()+task);
+        File f = new File(tdir.getAbsolutePath()+File.separator+task);//TODO factor this in everywhere
         if(!f.exists()){
             System.out.print("No such file exists: "+f.getAbsolutePath()+"\n");
             return;
@@ -285,7 +285,7 @@ public class Client {
             return;
         }
     
-        File f = new File(tdir.getAbsolutePath()+t.name);
+        File f = new File(tdir.getAbsolutePath()+File.separator+t.name);
         //Transmit the command string string.
         //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
         tout.println(script);
