@@ -268,7 +268,8 @@ public class GTEngine extends AbstractServer {
                 }
                 else{
                     //Replace name in cmd string.
-                    execln.replace(tname, tname + num);
+                    String rpl = tname+num;
+                    execln.replace(tname.substring(2), rpl);//TODO This does not replace!!!
                     //fork and pipe stdout to sock
                     Process p = Runtime.getRuntime().exec(execln);
                     BufferedReader pin = new BufferedReader(
@@ -278,6 +279,7 @@ public class GTEngine extends AbstractServer {
                     while ((in = pin.readLine()) != null) {
                         toCl.println("Task " + tid + ": " + in);
                     }
+                    //TODO why do I only get error output
                     //clean up
                     pin.close();
                     p.destroy();
@@ -338,7 +340,7 @@ public class GTEngine extends AbstractServer {
         }
         
         public void run(){
-            DatagramPacket in = new DatagramPacket(new byte[1024], 0);//TODO check what this actually does
+            DatagramPacket in = new DatagramPacket(new byte[1024], 0);
 
             while(!terminate){
                 try {

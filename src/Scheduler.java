@@ -142,7 +142,7 @@ public class Scheduler extends AbstractServer {
             } catch (IOException e) {
                 if(DEBUG){e.printStackTrace();}
             }
-            //TODO maybe do err msgs
+            //maybe do err msgs
         }
         return;
 
@@ -224,9 +224,9 @@ public class Scheduler extends AbstractServer {
 
 
     private class Worker extends AbstractServer.Worker{
-        //TODO Deamonize
         public Worker(Socket s) {
             super(s);
+            this.setDaemon(true);
         }
         public void run(){
             try{
@@ -267,6 +267,7 @@ public class Scheduler extends AbstractServer {
                     return "Not enough capacity. Try again later.";
                 }
                 Enumeration<Company> ce = Companies.elements();
+                //TODO check this does not work
                 while(ce.hasMoreElements()){
                 	Company c = ce.nextElement();
                     if(c.via == ip){

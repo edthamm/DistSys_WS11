@@ -68,7 +68,15 @@ public class Client {
         boolean exitFlag = false;
         
         while(!exitFlag && (userin = stdin.readLine()) != null){
-            String usersp[] = userin.split(" ");
+            String usercmd[] = userin.split("\"");
+            String usersp[] = usercmd[0].split(" ");
+            if(usercmd.length > 1){
+                String tmp[] = new String[3];
+                tmp[0] = usersp[0];
+                tmp[1] = usersp[1];
+                tmp[2] = usercmd[1]; 
+                usersp = tmp;
+            }
             try{
                 exitFlag = checkAction(usersp);
             }
@@ -124,7 +132,6 @@ public class Client {
                 return false;
             } 
             executeTask(Integer.parseInt(in[1]),in[2]);
-            //TODO startscript conains spaces dumbass
            return false; 
         }
         if(in[0].contentEquals("!info")){
@@ -222,7 +229,7 @@ public class Client {
     private void requestEngine(int id){
         Task t = getTask(id);
         
-        if(t == null){
+        if(t == null || t.status != TASKSTATE.prepared){
             System.out.print("Task not prepared.\n");
             return;
         }
@@ -317,6 +324,7 @@ public class Client {
             return;
         }
         System.out.print("Transmitted Task!\n");
+        t.status = TASKSTATE.executing;
 
     }
     
@@ -463,7 +471,6 @@ public class Client {
                 if(rcv.contains("Finished Task")){
                     String rs[] = rcv.split(" ");
                     taskList.get(Integer.parseInt(rs[2])-1).status = TASKSTATE.finished;
-                    //TODO Check this does not work. Maybe add close to tsock here; 
                     return;
                 }
                 if(!rcv.contentEquals("")){
