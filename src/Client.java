@@ -465,8 +465,6 @@ public class Client {
                 }
                 if(rcv.contains("Not enough capacity. Try again later.")){
                     System.out.print("Not enough capacity. Try again later.\n");
-                    String rs[] = rcv.split(" ");
-                    taskList.get(Integer.parseInt(rs[0])-1).status = TASKSTATE.assigned;
                     rcv = "";
                 }
                 if(rcv.contains("Finished Task")){

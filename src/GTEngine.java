@@ -242,10 +242,10 @@ public class GTEngine extends AbstractServer {
                 
                 //Find free filename and create the file 
                 int num = 0;
-                while(new File(tdir.getAbsolutePath()+File.separator+tname+num).exists()){//TODO maybe add file.seperator
+                while(new File(tdir.getAbsolutePath()+File.separator+tname+num).exists()){
                     num++;
                 }
-                File f = new File(tdir.getAbsolutePath()+File.separator+tname+num);//TODO check if this works if not see above
+                File f = new File(tdir.getAbsolutePath()+File.separator+tname+num);
                 f.createNewFile();
                 
                 //Receive the file
@@ -269,7 +269,7 @@ public class GTEngine extends AbstractServer {
                 else{
                     //Replace name in cmd string.
                     String rpl = tname+num;
-                    execln.replace(tname, rpl);//TODO This does not replace!!! What's the problem here
+                    execln = execln.replace(tname, rpl);
                     //fork and pipe stdout to sock
                     Process p = Runtime.getRuntime().exec(execln, null, tdir);
                     BufferedReader pin = new BufferedReader(
@@ -355,7 +355,7 @@ public class GTEngine extends AbstractServer {
                     }
                 } catch (IOException e) {
                     if(DEBUG){e.printStackTrace();}
-                    System.out.println("Error recieving UDP Massages from Scheduler I/O.");
+                    if(DEBUG){System.out.println("Error recieving UDP Massages from Scheduler I/O.");}
                 }
                 
             }
