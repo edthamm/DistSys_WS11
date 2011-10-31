@@ -242,10 +242,10 @@ public class GTEngine extends AbstractServer {
                 
                 //Find free filename and create the file 
                 int num = 0;
-                while(new File(tdir.getAbsolutePath()+tname+num).exists()){//TODO maybe add file.seperator
+                while(new File(tdir.getAbsolutePath()+File.separator+tname+num).exists()){//TODO maybe add file.seperator
                     num++;
                 }
-                File f = new File(tdir.getAbsolutePath()+tname+num);//TODO see above
+                File f = new File(tdir.getAbsolutePath()+File.separator+tname+num);//TODO check if this works if not see above
                 f.createNewFile();
                 
                 //Receive the file

@@ -273,15 +273,15 @@ public class Scheduler extends AbstractServer {
                     if(c.via.contentEquals(ip)){
                         if(in[2].contains("HIGH")){
                             c.high++;
-                            GTs.get(g.ip).load = 100;
+                            GTs.get(g.ip+g.tcp).load = 100;
                         }
                         if(in[2].contains("MIDDLE")){
                             c.middle++;
-                            GTs.get(g.ip).load += 66;
+                            GTs.get(g.ip+g.tcp).load += 66;
                         }
                         if(in[2].contains("LOW")){
                             c.low++;
-                            GTs.get(g.ip).load += 33;
+                            GTs.get(g.ip+g.tcp).load += 33;
                         }
                     }
                 }
@@ -340,7 +340,7 @@ public class Scheduler extends AbstractServer {
                 
                 sout.println("!Load");
                 sout.flush();
-                GTs.get(g.ip).load = Integer.parseInt(sin.readLine());
+                GTs.get(g.ip+g.tcp).load = Integer.parseInt(sin.readLine());
                 
                 sin.close();
                 sout.close();
@@ -419,23 +419,23 @@ public class Scheduler extends AbstractServer {
         		Enumeration<GTEntry> gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
-                    if (g.ip == in.getAddress().toString().substring(1) && g.tcp == Integer.parseInt(rcv[0])) {//TODO problem with same IP , should be solved now
+                    if (g.ip.contains(in.getAddress().toString().substring(1)) && g.tcp == Integer.parseInt(rcv[0])) {
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             g.resetTimer();
                             g.status = GTSTATUS.online;
                             return;
                         } else {
-                            return;
+                            return;// mutliple ges now supported but trouble with isAlives (runns in normal problems only in debug)
                         }
                     }
                 }
             }
             //engine unknown make new
             GTEntry g = new GTEntry(in.getAddress().toString().substring(1),Integer.parseInt(rcv[0]), in.getPort(), GTSTATUS.online, Integer.parseInt(rcv[1]), Integer.parseInt(rcv[2]), 0);
-            GTs.put(g.ip, g);//TODO something is wrong here look at this most likely same key problem; think about key
+            GTs.put(g.ip+g.tcp, g);
             g.startTimer();
             } catch(NumberFormatException e){
-                System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString().substring(1)+" \n");
+                if(DEBUG){System.out.print("An isAlive from a new TaskEngine is malformated. IP: "+in.getAddress().toString().substring(1)+" \n");}
                 if(DEBUG){e.printStackTrace();}
             }
             
@@ -552,7 +552,7 @@ public class Scheduler extends AbstractServer {
         	}
 
             public void run() {
-                GTs.get(g.ip).status=GTSTATUS.offline;
+                GTs.get(g.ip+g.tcp).status=GTSTATUS.offline;
             }
             
         }
@@ -624,13 +624,13 @@ public class Scheduler extends AbstractServer {
         
         private void suspend(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!suspend");
-            GTs.get(g.ip).status = GTSTATUS.suspended;
+            GTs.get(g.ip+g.tcp).status = GTSTATUS.suspended;
             g.stopTimer();
         }
         
         private void activate(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!wakeUp");
-            GTs.get(g.ip).status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
+            GTs.get(g.ip+g.tcp).status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
             
         }
     }

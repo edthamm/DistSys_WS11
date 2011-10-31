@@ -209,7 +209,7 @@ public class Client {
             }
         }
         //TODO retest and maybe add +"/"
-        File f = new File(tdir.getAbsolutePath()+File.separator+task);//TODO factor this in everywhere
+        File f = new File(tdir.getAbsolutePath()+File.separator+task);
         if(!f.exists()){
             System.out.print("No such file exists: "+f.getAbsolutePath()+"\n");
             return;
