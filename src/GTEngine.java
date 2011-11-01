@@ -2,6 +2,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -24,6 +25,7 @@ public class GTEngine extends AbstractServer {
     private final static boolean DEBUG = false;
     private DatagramSocket uSock = null;
     private Timer time = new Timer();;
+    private LinkedList<Process> Prs = new LinkedList<Process>();
     
     public GTEngine(int tp, String sched, int udp, int ia, int min, int max, String td){
         Tport = tp;
@@ -162,6 +164,7 @@ public class GTEngine extends AbstractServer {
         terminate = true;
         time.cancel();
         uSock.close();
+        killps();
         super.exitRoutine();
         return;
     }
@@ -170,10 +173,17 @@ public class GTEngine extends AbstractServer {
         terminate = true;
         time.cancel();
         uSock.close();
+        killps();
         super.exitRoutineFail();
         return;
     }
     //TODO logout clients
+    
+    private void killps(){
+        for(Process p : Prs){
+            p.destroy();
+        }
+    }
     
     
     
@@ -273,6 +283,7 @@ public class GTEngine extends AbstractServer {
                     execln = execln.replace(tname, rpl);
                     //fork and pipe stdout to sock
                     Process p = Runtime.getRuntime().exec(execln, null, tdir);
+                    Prs.add(p);
                     BufferedReader pin = new BufferedReader(
                             new InputStreamReader(p.getInputStream()));
                     

@@ -438,7 +438,12 @@ public class Scheduler extends AbstractServer {
                 	GTEntry g = gi.nextElement();
                     if (g.ip.contains(in.getAddress().toString().substring(1)) && g.tcp == Integer.parseInt(rcv[0])) {
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
+                            try{
                             g.resetTimer();
+                            }
+                            catch(NullPointerException e){
+                                if(DEBUG){e.printStackTrace();}
+                            }                            
                             g.status = GTSTATUS.online;
                             return;
                         } else {
