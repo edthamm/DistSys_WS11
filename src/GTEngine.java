@@ -173,6 +173,7 @@ public class GTEngine extends AbstractServer {
         super.exitRoutineFail();
         return;
     }
+    //TODO logout clients
     
     
     

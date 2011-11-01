@@ -445,6 +445,7 @@ public class Client {
                     if(DEBUG){e.printStackTrace();}
                     Listener.this.exit();
                 }
+                try{
                 if(rcv.contentEquals("Successfully logged out.") || rcv.contains("Wrong company or password.")){
                     System.out.print(rcv +"\n");
                     return;
@@ -474,6 +475,12 @@ public class Client {
                 }
                 if(!rcv.contentEquals("")){
                     System.out.print(rcv +"\n");
+                }
+                }
+                catch(NullPointerException e){
+                    if(DEBUG){e.printStackTrace();}
+                    System.out.println("Server hung up. Seems he went down hard.");
+                    return;
                 }
             }
             return;

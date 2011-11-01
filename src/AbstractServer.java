@@ -6,6 +6,7 @@
  */
 import java.io.*;
 import java.net.*;
+import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,6 +16,7 @@ public abstract class AbstractServer {
     protected ExecutorService abservexe = Executors.newCachedThreadPool();
     protected int Tport;
     private final static boolean DEBUG = false;
+    protected LinkedList<Socket> CSocks = new LinkedList<Socket>();
     
     
     public abstract void tcpListen() throws IOException;
@@ -49,6 +51,7 @@ public abstract class AbstractServer {
         public Worker(Socket s) {
             super();
             Csock = s;
+            CSocks.add(s);
         }
         
         public void run(){

@@ -175,6 +175,7 @@ public class Scheduler extends AbstractServer {
         contE.shutdownNow();
         if(uSock != null){uSock.close();}
         etime.cancel();
+        logoutCompanies();
         super.exitRoutineFail();
     }
     
@@ -193,8 +194,14 @@ public class Scheduler extends AbstractServer {
         while(ce.hasMoreElements()){
             Company c = ce.nextElement();
             if(c.line == COMPANYCONNECT.online){
-                //TODO figure out how to do this.
-                //maybe set a c.worker and kill it...
+                c.line = COMPANYCONNECT.offline;
+            }
+        }
+        for(Socket s : CSocks){
+            try {
+                s.close();
+            } catch (IOException e) {
+                if(DEBUG){e.printStackTrace();}
             }
         }
     }
@@ -238,7 +245,6 @@ public class Scheduler extends AbstractServer {
     private class Worker extends AbstractServer.Worker{
         public Worker(Socket s) {
             super(s);
-            this.setDaemon(true);
         }
         public void run(){
             try{
