@@ -167,8 +167,8 @@ public class Scheduler extends AbstractServer {
         if(uSock != null){uSock.close();}
         etime.cancel();
         cancelGETimer();
+        logoutCompanies();
         super.exitRoutine();
-        //TODO log out all clients
     }
     
     public void exitRoutineFail(){
@@ -185,6 +185,17 @@ public class Scheduler extends AbstractServer {
             	GTEntry g = gi.nextElement();
             	g.stopTimer();
             }	
+        }
+    }
+    
+    private void logoutCompanies(){
+        Enumeration<Company> ce = Companies.elements();
+        while(ce.hasMoreElements()){
+            Company c = ce.nextElement();
+            if(c.line == COMPANYCONNECT.online){
+                //TODO figure out how to do this.
+                //maybe set a c.worker and kill it...
+            }
         }
     }
 
