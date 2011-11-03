@@ -119,7 +119,7 @@ public class Scheduler extends AbstractServer {
                 coef = gc.maxE -gc.minE;
             }
         }
-        
+        g.load = g.load+load;
         return g;
     }
     
@@ -290,15 +290,12 @@ public class Scheduler extends AbstractServer {
                     if(c.via.contentEquals(ip)){
                         if(in[2].contains("HIGH")){
                             c.high++;
-                            GTs.get(g.ip+g.tcp).load = 100;
                         }
                         if(in[2].contains("MIDDLE")){
                             c.middle++;
-                            GTs.get(g.ip+g.tcp).load += 66;
                         }
                         if(in[2].contains("LOW")){
                             c.low++;
-                            GTs.get(g.ip+g.tcp).load += 33;
                         }
                     }
                 }
@@ -357,7 +354,7 @@ public class Scheduler extends AbstractServer {
                 
                 sout.println("!Load");
                 sout.flush();
-                GTs.get(g.ip+g.tcp).load = Integer.parseInt(sin.readLine());
+                g.load = Integer.parseInt(sin.readLine());
                 
                 sin.close();
                 sout.close();
@@ -535,7 +532,7 @@ public class Scheduler extends AbstractServer {
         private GTSTATUS status;
         private int minE = 0;
         private int maxE = 0;
-        private int load = 0;
+        public volatile int load = 0;
         private boolean isAlive = true;
         Timer time;
         
