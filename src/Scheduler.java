@@ -440,11 +440,11 @@ public class Scheduler extends AbstractServer {
                         if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             try{
                             g.resetTimer();
+                            g.status = GTSTATUS.online;
                             }
                             catch(NullPointerException e){
                                 if(DEBUG){e.printStackTrace();}
                             }                            
-                            g.status = GTSTATUS.online;
                             return;
                         } else {
                             return;// mutliple ges now supported but trouble with isAlives (runns in normal problems only in debug)
@@ -536,6 +536,7 @@ public class Scheduler extends AbstractServer {
         private int minE = 0;
         private int maxE = 0;
         private int load = 0;
+        private boolean isAlive = true;
         Timer time;
         
         public GTEntry(String ip, int tcp, int udp, GTSTATUS status, int minE, int maxE , int load){
@@ -550,7 +551,7 @@ public class Scheduler extends AbstractServer {
         
         public void startTimer(){
             time = new Timer(true);
-            time.schedule(new Timeout(this), tout);
+            time.scheduleAtFixedRate(new Timeout(this), 0, tout);        
         }
         //TODO maybe replace tout with checkp!exit
         
@@ -562,15 +563,7 @@ public class Scheduler extends AbstractServer {
         }
         
         public void resetTimer(){
-            try{
-            time.cancel(); //may be called repeatedly according to doc
-            time.purge();
-            time = new Timer(true);
-            time.schedule(new Timeout(this), tout);}
-            catch(NullPointerException e)
-            {
-                if(DEBUG){e.printStackTrace();}
-            }
+        	isAlive = true;
         }
         
         public String toString(){
@@ -584,7 +577,14 @@ public class Scheduler extends AbstractServer {
         	}
 
             public void run() {
-                GTs.get(g.ip+g.tcp).status=GTSTATUS.offline;
+                if(g.isAlive){
+                	g.isAlive = false;
+                	return;
+                }
+                else{
+                	g.status=GTSTATUS.offline;
+                }
+                return;
             }
             
         }
