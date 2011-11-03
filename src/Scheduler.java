@@ -550,17 +550,25 @@ public class Scheduler extends AbstractServer {
         
         public void startTimer(){
             time = new Timer(true);
-            time.schedule(new Timeout(this), tout);
+            time.schedule(new Timeout(this), checkP);
         }
+        //TODO maybe replace tout with checkp!exit
+        
+        
         
         public void stopTimer(){
             time.cancel();
         }
         
         public void resetTimer(){
+            try{
             time.cancel(); //may be called repeatedly according to doc
             time = new Timer(true);
-            time.schedule(new Timeout(this), tout);
+            time.schedule(new Timeout(this), checkP);}
+            catch(NullPointerException e)
+            {
+                if(DEBUG){e.printStackTrace();}
+            }
         }
         
         public String toString(){
