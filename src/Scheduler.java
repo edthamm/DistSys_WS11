@@ -550,7 +550,6 @@ public class Scheduler extends AbstractServer {
             time = new Timer(true);
             time.scheduleAtFixedRate(new Timeout(this), 0, tout);        
         }
-        //TODO maybe replace tout with checkp!exit
         
         
         
