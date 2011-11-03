@@ -413,7 +413,7 @@ public class Scheduler extends AbstractServer {
 
     }
     
-    private class CWorker extends Thread{
+    private class CWorker implements Runnable{
         //One CWorker manages on GTE
         private DatagramPacket in = null;
         public CWorker(DatagramPacket in) {
@@ -550,7 +550,7 @@ public class Scheduler extends AbstractServer {
         
         public void startTimer(){
             time = new Timer(true);
-            time.schedule(new Timeout(this), checkP);
+            time.schedule(new Timeout(this), tout);
         }
         //TODO maybe replace tout with checkp!exit
         
@@ -564,7 +564,7 @@ public class Scheduler extends AbstractServer {
             try{
             time.cancel(); //may be called repeatedly according to doc
             time = new Timer(true);
-            time.schedule(new Timeout(this), checkP);}
+            time.schedule(new Timeout(this), tout);}
             catch(NullPointerException e)
             {
                 if(DEBUG){e.printStackTrace();}
