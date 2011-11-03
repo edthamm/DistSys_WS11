@@ -558,11 +558,13 @@ public class Scheduler extends AbstractServer {
         
         public void stopTimer(){
             time.cancel();
+            time.purge();
         }
         
         public void resetTimer(){
             try{
             time.cancel(); //may be called repeatedly according to doc
+            time.purge();
             time = new Timer(true);
             time.schedule(new Timeout(this), tout);}
             catch(NullPointerException e)
