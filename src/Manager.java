@@ -2,8 +2,6 @@ import java.io.*;
 import java.net.*;
 import java.util.Enumeration;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.*;
 
 
@@ -14,6 +12,8 @@ public class Manager {
     private String bindingName;
     private String schedHost;
     private int schedTP;
+    private String regHost;
+    private int regPort;
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
 
     
@@ -43,7 +43,7 @@ public class Manager {
     
     private void readRegistry() throws FileNotFoundException{
         InputStream in = null;
-        in = ClassLoader.getSystemResourceAsStream("company.properties");
+        in = ClassLoader.getSystemResourceAsStream("registry.properties");
         if(in != null){
             java.util.Properties registry = new java.util.Properties();
             try {
@@ -53,16 +53,20 @@ public class Manager {
                 for (String prop : registryprops){
                     String p = registry.getProperty(prop);
                     if(prop.contentEquals("registry.host")){
-                        //TODO
+                        regHost = p;
                     }
                     if(prop.contentEquals("registry.port")){
-                        //TODO
+                        regPort = Integer.parseInt(p);
                     }
                 }
                 
             } catch (IOException e) {
                 System.out.print("Could not read from registry.properties. Exiting.\n");
                 exitRoutineFail();
+                if(DEBUG){e.printStackTrace();}
+            }
+            catch(NumberFormatException e){
+                System.out.print("Your registry.proerties file is malformed. Port is not an integer.\n");
                 if(DEBUG){e.printStackTrace();}
             }
         }
