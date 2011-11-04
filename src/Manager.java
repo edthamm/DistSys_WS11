@@ -126,6 +126,7 @@ public class Manager {
             Manager m = new Manager(args[0], args[1], Integer.parseInt(args[2]));
             
             m.readProperties();
+            m.inputListen();
             
             
         } catch (IOException e) {
@@ -149,6 +150,13 @@ public class Manager {
             try {
                 while((userin = stdin.readLine()) != null){
                     if(userin.contentEquals("!users")){
+                        Enumeration<User> u = Users.elements();
+                        int i = 1;
+                        while(u.hasMoreElements()){
+                            User a = u.nextElement();
+                            System.out.println(i + a.toString());
+                            i++;
+                        }
                        
                     }
                     if(userin.contentEquals("!exit")){
