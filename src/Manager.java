@@ -1,7 +1,9 @@
 import java.io.*;
 import java.net.*;
+import java.rmi.RemoteException;
 import java.util.Enumeration;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 
 
@@ -15,6 +17,7 @@ public class Manager {
     private String regHost;
     private int regPort;
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
+    private ConcurrentHashMap<Integer,Integer> Prices = new ConcurrentHashMap<Integer,Integer>();
 
     
     public Manager(String bn, String sh, int tp){
@@ -222,6 +225,66 @@ public class Manager {
         }
         
 
+    }
+    
+    private class Remote implements Companyable{
+
+        public boolean buyCredits(int amount) throws RemoteException {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        public boolean executeTask(int id) throws RemoteException {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        public int getCredits() throws RemoteException {
+            // TODO Auto-generated method stub
+            return 0;
+        }
+
+        public void getOutputOf(int id) throws RemoteException {
+            // TODO Auto-generated method stub
+            
+        }
+
+        public void getTaskInfo(int id) throws RemoteException {
+            // TODO Auto-generated method stub
+            
+        }
+
+        public void logout() throws RemoteException {
+            // TODO Auto-generated method stub
+        }
+
+        public boolean prepareTask(Task t) throws RemoteException {
+            // TODO Auto-generated method stub
+            return false;
+        }
+    }
+    
+    private class RAdmin implements Adminable{
+
+        public Set<Entry<Integer, Integer>> getPrices() throws RemoteException {
+            return Prices.entrySet();
+        }
+
+        public void logout() throws RemoteException {
+            // TODO Auto-generated method stub
+            
+        }
+
+        public void setPrice(int step, int discount) throws RemoteException {
+            if(Prices.containsKey(Integer.valueOf(step))){
+                Prices.replace(Integer.valueOf(step), Integer.valueOf(discount));
+            }
+            else{
+                Prices.put(Integer.valueOf(step), Integer.valueOf(discount));
+            }
+            return;           
+        }
+        
     }
 
 }
