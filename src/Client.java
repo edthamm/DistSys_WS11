@@ -13,6 +13,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -160,7 +161,7 @@ public class Client implements Callbackable{
                System.out.print("Invalid parameters. Usage: !stePriceStep taskCount percent.\n");
                return false;
             }
-            setPstep(Integer.parseInt(in[1]),Integer.parseInt(in[2]));
+            setPstep(Integer.parseInt(in[1]),Double.parseDouble(in[2]));
            return false; 
         }
         //company
@@ -204,6 +205,14 @@ public class Client implements Callbackable{
             info(Integer.parseInt(in[1]));
             return false; 
         }
+        if(in[0].contentEquals("!getOutput")){
+            if(in.length != 2){
+                System.out.print("Invalid parameters. Usage: !getOutput taskid.\n");
+                return false;
+            }
+            getOut(Integer.parseInt(in[1]));
+            return false; 
+        }
         //exit
         if(in[0].contentEquals("!exit")){
             exit(); 
@@ -216,7 +225,15 @@ public class Client implements Callbackable{
     }
     
     
+    private void getOut(int parseInt) throws RemoteException {
+        if(comp == null && admin == null){System.out.println("Your not logged in!");}
+        if(comp == null){System.out.println("Your not a Company!");}
+        comp.getOutputOf(parseInt);
+    }
+
+
     private void buyC(int parseInt) throws RemoteException {
+        if(comp == null && admin == null){System.out.println("Your not logged in!");}
         if(comp == null){System.out.println("Your not a Company!");}
         if(comp.buyCredits(parseInt)){
             System.out.println("You have bought "+parseInt+" Credits. Your balance now is: " +comp.getCredits());
@@ -225,21 +242,27 @@ public class Client implements Callbackable{
 
 
     private void credits() throws RemoteException {
+        if(comp == null && admin == null){System.out.println("Your not logged in!");}
         if(comp == null){System.out.println("Your not a Company!");}
         System.out.println("You have: "+comp.getCredits());
         
     }
 
 
-    private void setPstep(int i, int j) throws RemoteException {
+    private void setPstep(int i, double j) throws RemoteException {
         if(admin == null){System.out.println("Your not an Admin!");}
         admin.setPrice(i,j);
     }
 
 
-    private void getPcurve() {
+    private void getPcurve() throws RemoteException {
         if(admin == null){System.out.println("Your not an Admin!");}
-        //TODO
+        Set<Map.Entry<Integer,Double>> ps = admin.getPrices();
+        System.out.println("Task count | Discount");
+        for(Map.Entry<Integer,Double> e : ps){
+            System.out.println(e.getKey()+" | "+e.getValue() +"%");
+            
+        }
         
     }
 
@@ -253,6 +276,7 @@ public class Client implements Callbackable{
             System.setSecurityManager(new SecurityManager());
         }
         try {
+            if(admin != null || comp != null){System.out.println("Already logged in.");}
             Registry r = LocateRegistry.getRegistry(mancomp, port);
             Loginable l = (Loginable) r.lookup(sname);
             return l.login(user, pass, cb);
@@ -295,6 +319,7 @@ public class Client implements Callbackable{
      * Postconditions: new task with unique taskid prepared
      */
     private void prepare(String task, String type) throws IOException{
+        if(comp == null && admin == null){System.out.println("Your not logged in!");}
         if(comp == null){System.out.println("Your not a Company!");}
         TASKTYPE typ = null;
         if(type.contentEquals("LOW")){
@@ -364,6 +389,7 @@ public class Client implements Callbackable{
      * Postconditions: Task info printed to std out
      */
     private void info(int id) throws RemoteException{
+        if(comp == null && admin == null){System.out.println("Your not logged in!");}
         if(comp == null){System.out.println("Your not a Company!");}
         comp.getTaskInfo(id);
         
@@ -401,7 +427,7 @@ public class Client implements Callbackable{
         
         try{
             c = new Client(args[0], args[1]);
-            c.readRegProp();//TODO catch fnf
+            c.readRegProp();// catch fnf
             c.run();
         } catch(NumberFormatException e){
             System.out.print("Second argument must be an Integer value.\n");

@@ -1,11 +1,11 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 
 public interface Adminable extends Remote, Comunicatable {
-    Set<Map.Entry<Integer, Integer>> getPrices() throws RemoteException;
-    void setPrice(int step, int discount) throws RemoteException;
+    Set<Entry<Integer, Double>> getPrices() throws RemoteException;
+    void setPrice(int step, double discount) throws RemoteException;
     void logout() throws RemoteException;
 }

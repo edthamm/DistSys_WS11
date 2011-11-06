@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 
-
+//TODO doe error handling on client imput
 
 public class Manager {
     private static final boolean DEBUG = true;
@@ -24,7 +24,7 @@ public class Manager {
     private BufferedReader schedin;
     private ExecutorService TaskEServ = Executors.newCachedThreadPool();
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
-    private ConcurrentHashMap<Integer,Integer> Prices = new ConcurrentHashMap<Integer,Integer>();
+    private ConcurrentHashMap<Integer,Double> Prices = new ConcurrentHashMap<Integer,Double>();
     private ConcurrentHashMap<Integer,MTask> Tasks = new ConcurrentHashMap<Integer,MTask>();
 
     
@@ -242,7 +242,7 @@ public class Manager {
         private int low = 0;
         private int middle = 0;
         private int high = 0;
-        private int credits = 0;
+        private volatile int credits = 0;
         private Callbackable callback = null;
         
         public User(String n, String pw, int c){
@@ -344,7 +344,7 @@ public class Manager {
             name = n;
         }
 
-        public Set<Entry<Integer, Integer>> getPrices() throws RemoteException {
+        public Set<Entry<Integer, Double>> getPrices() throws RemoteException {
             return Prices.entrySet();
         }
 
@@ -355,12 +355,12 @@ public class Manager {
             
         }
 
-        public void setPrice(int step, int discount) throws RemoteException {
+        public void setPrice(int step, double discount) throws RemoteException {
             if(Prices.containsKey(Integer.valueOf(step))){
-                Prices.replace(Integer.valueOf(step), Integer.valueOf(discount));
+                Prices.replace(Integer.valueOf(step), Double.valueOf(discount));
             }
             else{
-                Prices.put(Integer.valueOf(step), Integer.valueOf(discount));
+                Prices.put(Integer.valueOf(step), Double.valueOf(discount));
             }
             return;           
         }
@@ -373,7 +373,7 @@ public class Manager {
                 throws RemoteException {
             User u;
             if((u = Users.get(uname)) != null){
-                if(u.verify(password)){
+                if(u.verify(password) && u.callback == null){
                     u.callback = cb;
                     cb.sendMessage("Logged in.");
                     if(u instanceof Admin){
@@ -382,7 +382,7 @@ public class Manager {
                     return (Comunicatable) UnicastRemoteObject.exportObject(new Remote(uname));
                 }
             }
-            cb.sendMessage("Wrong username or Password.");
+            cb.sendMessage("Wrong username or Password or account already in use.");
             return null;
         }
         
@@ -480,6 +480,9 @@ public class Manager {
                 }
                 m.status = TASKSTATE.finished;
                 m.finish = System.currentTimeMillis();
+                cb.sendMessage("Execution of Task "+m.id+" finished.");
+                
+                //TODO reduce credits of company
                 
                 tout.close();
                 dout.close();
