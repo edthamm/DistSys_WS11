@@ -9,9 +9,12 @@
 
 import java.io.*;
 import java.net.*;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.*;
 
-public class Client {
+public class Client implements Callbackable{
     
     private int port;
     private String server;
@@ -21,6 +24,7 @@ public class Client {
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = false;
+    private Remote cb;
 
     /*
      * Preconditions: srv, p not null
@@ -56,6 +60,23 @@ public class Client {
             System.exit(1);
         }
     }
+    
+    public void createStub(){
+        try {
+            cb = UnicastRemoteObject.exportObject(this, 0);
+        } catch (RemoteException e) {
+            if(DEBUG){e.printStackTrace();}
+            System.out.println("Could not export Callback. Exiting...");
+            exit();
+            return;
+        }
+    }
+    
+    public void sendMessage(String msg){
+        System.out.println(msg);
+    }
+    
+    
     /*
      * Preconditions: none
      * Postconditions: program execution started
@@ -152,8 +173,7 @@ public class Client {
      * Postconditions: Connection is build, reading and writing lines are opened. User is logged in to server, or error is thrown.
      */
     private void login(String user, String pass){
-        sout.println("!login "+user+" "+pass);
-        e.execute(new Listener(ssock,sin));
+        //TODO remote
     }
     
     /*
@@ -161,7 +181,7 @@ public class Client {
      * Postconditions: logged out
      */
     private void logout(){
-        //TODO remoteS
+        //TODO remote
     }
     
     

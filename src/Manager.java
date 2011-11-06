@@ -221,7 +221,6 @@ public class Manager {
     }
     
     private class User{
-        private String via ="";
         private String name = "";
         private String password = ""; //this is inherently unsafe in production use encryption
         private COMPANYCONNECT line = COMPANYCONNECT.offline;
@@ -229,6 +228,7 @@ public class Manager {
         private int middle = 0;
         private int high = 0;
         private int credits = 0;
+        private Callbackable callback;
         
         public User(String n, String pw, int c){
             name = n;
@@ -266,22 +266,24 @@ public class Manager {
     
     private class Remote implements Companyable{
         private String name ="";
+        private Callbackable cb = Users.get(name).callback;
 
         public boolean buyCredits(int amount) throws RemoteException {
             Users.get(name).credits += amount;
             return true;
         }
 
-        public String executeTask(int id, String execln) throws RemoteException {
+        public void executeTask(int id, String execln) throws RemoteException {
             MTask t = Tasks.get(Integer.valueOf(id));
             if(t == null){
-                return "No Task with id: "+id+" known.";
+                cb.sendMessage("No Task with id: "+id+" known.");
+                return;
             }
             if(t.owner.contentEquals(name)){
                 t.execln = execln;
-                TaskEServ.execute(new TaskExecutor(t));
+                TaskEServ.execute(new TaskExecutor(t, cb));
             }
-                return "Sorry";
+                return;
         }
 
         public int getCredits() throws RemoteException {
@@ -333,11 +335,33 @@ public class Manager {
         
     }
     
-    private class TaskExecutor implements Runnable{
-        MTask m;    
+    private class LoginHandler implements Loginable{
+
+        public Comunicatable login(String uname, String password, Callbackable cb)
+                throws RemoteException {
+            User u;
+            if((u = Users.get(uname)) != null){
+                if(u.verify(password)){
+                    u.callback = cb;
+                    if(u instanceof Admin){
+                        return new RAdmin();//TODO does this need an export?
+                    }
+                    return new Remote();
+                }
+            }
+
+            return null;
+        }
         
-        public TaskExecutor(MTask mt){
+    }
+    
+    private class TaskExecutor implements Runnable{
+        MTask m;
+        Callbackable cb;
+        
+        public TaskExecutor(MTask mt, Callbackable c){
             m = mt;
+            cb = c;
         }
 
         public void run() {
@@ -414,8 +438,8 @@ public class Manager {
                 }
                 else{
                     m.status = TASKSTATE.prepared;
+                    cb.sendMessage("Currently no engine available, try again later.");
                     return;
-                    //TODO callback
                 }
 
                 while((in = tin.readLine())!= null){
