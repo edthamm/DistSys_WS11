@@ -1,6 +1,9 @@
 import java.io.*;
 import java.net.*;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -55,7 +58,19 @@ public class Manager {
     }
     
     private void setupRMI(){
-        //TODOS
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        
+        try {
+            Loginable l = (Loginable) UnicastRemoteObject.exportObject(new LoginHandler(), 0);
+            Registry r = LocateRegistry.createRegistry(regPort);
+            r.rebind(bindingName, l);
+            System.out.println("Bound login to"+bindingName);
+        } catch (RemoteException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        }
     }
     
     private void schedConnect(){
@@ -170,6 +185,7 @@ public class Manager {
             m.readProperties();
             m.inputListen();
             m.schedConnect();
+            m.setupRMI();
             
             
         } catch (IOException e) {
@@ -223,12 +239,11 @@ public class Manager {
     private class User{
         private String name = "";
         private String password = ""; //this is inherently unsafe in production use encryption
-        private COMPANYCONNECT line = COMPANYCONNECT.offline;
         private int low = 0;
         private int middle = 0;
         private int high = 0;
         private int credits = 0;
-        private Callbackable callback;
+        private Callbackable callback = null;
         
         public User(String n, String pw, int c){
             name = n;
@@ -241,7 +256,10 @@ public class Manager {
         }
         
         public String toString(){
-            return(name+" ("+line.toString()+") LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
+            if(callback != null){
+                return(name+" (online) LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
+            }
+            return(name+" (offline) LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
         }
         
         public boolean verify(String pw){
@@ -258,7 +276,10 @@ public class Manager {
         }
         
         public String toString(){
-            return(super.name+" ("+super.line.toString()+")");
+            if(super.callback != null){
+                return(super.name+" (online)");
+            }
+            return(super.name+" (offline)");
         }
         
 
@@ -267,6 +288,10 @@ public class Manager {
     private class Remote implements Companyable{
         private String name ="";
         private Callbackable cb = Users.get(name).callback;
+        
+        public Remote(String n){
+            name = n;
+        }
 
         public boolean buyCredits(int amount) throws RemoteException {
             Users.get(name).credits += amount;
@@ -313,13 +338,20 @@ public class Manager {
     }
     
     private class RAdmin implements Adminable{
+        private String name ="";
+        
+        public RAdmin(String n){
+            name = n;
+        }
 
         public Set<Entry<Integer, Integer>> getPrices() throws RemoteException {
             return Prices.entrySet();
         }
 
         public void logout() throws RemoteException {
-            // TODO Auto-generated method stub
+            User me = Users.get(name);
+            me.callback.sendMessage("Thanks for using our services. Bye.");
+            me.callback = null;
             
         }
 
@@ -343,13 +375,14 @@ public class Manager {
             if((u = Users.get(uname)) != null){
                 if(u.verify(password)){
                     u.callback = cb;
+                    cb.sendMessage("Logged in.");
                     if(u instanceof Admin){
-                        return new RAdmin();//TODO does this need an export?
+                        return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname));
                     }
-                    return new Remote();
+                    return (Comunicatable) UnicastRemoteObject.exportObject(new Remote(uname));
                 }
             }
-
+            cb.sendMessage("Wrong username or Password.");
             return null;
         }
         

@@ -9,30 +9,32 @@
 
 import java.io.*;
 import java.net.*;
-import java.rmi.Remote;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Set;
 import java.util.concurrent.*;
 
 public class Client implements Callbackable{
     
+    private String mancomp;
     private int port;
-    private String server;
-    private Socket ssock;
-    private PrintWriter sout;
-    private BufferedReader sin;
+    private String sname;
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = false;
-    private Remote cb;
+    private Callbackable cb;
+    private Adminable admin = null;
+    private Companyable comp = null;
 
     /*
      * Preconditions: srv, p not null
      * Postconditions: new Client is created server and port are set
      */
-    public Client(String srv, int p, String dir){
-        port = p;
-        server = srv;
+    public Client(String sn, String dir){
+        sname = sn;
         tdir = new File(dir);
         if (!tdir.exists()){
             System.out.print(tdir.getName()+"does not exists.\n");
@@ -45,25 +47,43 @@ public class Client implements Callbackable{
     }
     
     
-    private void startUp(){
-        try {
-            ssock = new Socket(server, port);
-            sout = new PrintWriter(ssock.getOutputStream(), true);
-            sin = new BufferedReader(new InputStreamReader(ssock.getInputStream()));
-        } catch (UnknownHostException e) {
-            System.out.print("Login: Unknown Host, check server name and port.\n");
-            if(DEBUG){e.printStackTrace();}
-            System.exit(1);
-        } catch (IOException e) {
-            System.out.print("Login: Could not get I/O for "+server+" \n");
-            if(DEBUG){e.printStackTrace();}
-            System.exit(1);
+    private void readRegProp() throws FileNotFoundException{
+        InputStream in = null;
+        in = ClassLoader.getSystemResourceAsStream("registry.properties");
+        if(in != null){
+            java.util.Properties registry = new java.util.Properties();
+            try {
+                registry.load(in);
+                Set<String> registryprops = registry.stringPropertyNames();
+                
+                for (String prop : registryprops){
+                    String p = registry.getProperty(prop);
+                    if(prop.contentEquals("registry.host")){
+                        mancomp = p;
+                    }
+                    if(prop.contentEquals("registry.port")){
+                        port = Integer.parseInt(p);
+                    }
+                }
+                
+            } catch (IOException e) {
+                System.out.print("Could not read from registry.properties. Exiting.\n");
+                exit();
+                if(DEBUG){e.printStackTrace();}
+            }
+            catch(NumberFormatException e){
+                System.out.print("Your registry.proerties file is malformed. Port is not an integer.\n");
+                if(DEBUG){e.printStackTrace();}
+            }
+        }
+        else{
+            throw new FileNotFoundException();
         }
     }
     
     public void createStub(){
         try {
-            cb = UnicastRemoteObject.exportObject(this, 0);
+            cb = (Callbackable) UnicastRemoteObject.exportObject(this, 0);
         } catch (RemoteException e) {
             if(DEBUG){e.printStackTrace();}
             System.out.println("Could not export Callback. Exiting...");
@@ -118,7 +138,13 @@ public class Client implements Callbackable{
                 System.out.print("Invalid parameters. Usage: !login username password.\n");
                 return false;
             }
-            login(in[1],in[2]);
+            Comunicatable b = login(in[1],in[2]);
+            if(b instanceof Adminable){
+                admin = (Adminable) b;
+            }
+            else{
+                comp = (Companyable) b;
+            }
             return false; 
         }
         if(in[0].contentEquals("!logout")){
@@ -172,8 +198,23 @@ public class Client implements Callbackable{
      * Preconditions: user, pass not null
      * Postconditions: Connection is build, reading and writing lines are opened. User is logged in to server, or error is thrown.
      */
-    private void login(String user, String pass){
-        //TODO remote
+    private Comunicatable login(String user, String pass){
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        try {
+            Registry r = LocateRegistry.getRegistry(mancomp, port);
+            Loginable l = (Loginable) r.lookup(sname);
+            return l.login(user, pass, cb);
+        }
+        catch(RemoteException e){
+            if(DEBUG){e.printStackTrace();}
+            return null;
+        } catch (NotBoundException e) {
+            if(DEBUG){e.printStackTrace();}
+            return null;
+        }
+            
     }
     
     /*
@@ -271,32 +312,13 @@ public class Client implements Callbackable{
         System.out.print("Exiting on request. Good Bye!\n");
         logout();
         e.shutdownNow();
-        closeSchedulerConnection();
+
     }
     
     
     // Assistance functions
     
     
-    /*
-     * Preconditions: Logged in to Scheduler
-     * Postconditions: Scheduler connection terminated, variables set to null
-     */
-    private void closeSchedulerConnection(){
-        try{
-            if(sin != null){sin.close();}
-            if(sin != null){sout.close();}
-            if(sin != null){ssock.close();}
-        }
-        catch (Exception e){
-            if(DEBUG){e.printStackTrace();}
-            return;
-        }
-        sin = null;
-        sout = null;
-        ssock = null;
-        return;
-    }
   
     
     
@@ -357,7 +379,6 @@ public class Client implements Callbackable{
             } catch (IOException e) {
                 if(DEBUG){e.printStackTrace();}
             }
-            closeSchedulerConnection();
             exit();
             
         }
@@ -382,17 +403,17 @@ public class Client implements Callbackable{
     
     public static void main (String args[]){
         
-        final String usage = "DSLab Client usage: java Client.java schedulerHost schedulerTCPPort taskdir";
+        final String usage = "DSLab Client usage: java Client.java managementComponent taskdir";
         Client c;
         
-        if(args.length != 3){
+        if(args.length != 2){
             System.out.print(usage);
             System.exit(1); //return value
         }
         
         try{
-            c = new Client(args[0], Integer.parseInt(args[1]), args[2]);
-            c.startUp();
+            c = new Client(args[0], args[1]);
+            c.readRegProp();//TODO catch fnf
             c.run();
         } catch(NumberFormatException e){
             System.out.print("Second argument must be an Integer value.\n");
