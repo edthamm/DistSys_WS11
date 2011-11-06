@@ -16,8 +16,12 @@ public class Manager {
     private int schedTP;
     private String regHost;
     private int regPort;
+    private Socket schedsock;
+    private PrintWriter schedout;
+    private BufferedReader schedin;
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
     private ConcurrentHashMap<Integer,Integer> Prices = new ConcurrentHashMap<Integer,Integer>();
+    private ConcurrentHashMap<Integer,MTask> Tasks = new ConcurrentHashMap<Integer,MTask>();
 
     
     public Manager(String bn, String sh, int tp){
@@ -37,6 +41,26 @@ public class Manager {
     
     private void exitRoutineFail(){
         //TODO
+    }
+    
+    private void setupRMI(){
+        //TODOS
+    }
+    
+    private void schedConnect(){
+        try {
+            schedsock = new Socket(schedHost, schedTP);
+            schedout = new PrintWriter(schedsock.getOutputStream(), true);
+            schedin = new BufferedReader(new InputStreamReader(schedsock.getInputStream()));
+        } catch (UnknownHostException e) {
+            System.out.print("Login: Unknown Host, check server name and port.\n");
+            if(DEBUG){e.printStackTrace();}
+            System.exit(1);
+        } catch (IOException e) {
+            System.out.print("Login: Could not get I/O for "+schedHost+" \n");
+            if(DEBUG){e.printStackTrace();}
+            System.exit(1);
+        }
     }
     
     private void readProperties() throws FileNotFoundException{
@@ -134,6 +158,7 @@ public class Manager {
             
             m.readProperties();
             m.inputListen();
+            m.schedConnect();
             
             
         } catch (IOException e) {
@@ -185,6 +210,7 @@ public class Manager {
     }
     
     private class User{
+        private String via ="";
         private String name = "";
         private String password = ""; //this is inherently unsafe in production use encryption
         private COMPANYCONNECT line = COMPANYCONNECT.offline;
@@ -228,20 +254,28 @@ public class Manager {
     }
     
     private class Remote implements Companyable{
+        private String name ="";
 
         public boolean buyCredits(int amount) throws RemoteException {
-            // TODO Auto-generated method stub
-            return false;
+            Users.get(name).credits += amount;
+            return true;
         }
 
-        public boolean executeTask(int id) throws RemoteException {
-            // TODO Auto-generated method stub
-            return false;
+        public String executeTask(int id, String execln) throws RemoteException {
+            MTask t = Tasks.get(Integer.valueOf(id));
+            if(t == null){
+                return "No Task with id: "+id+" known.";
+            }
+            if(t.owner.contentEquals(name)){
+                t.execln = execln;
+                schedout.println("!requestEngine "+t.id+" "+t.ttype.toString());
+                //non blocking wait???
+            }
+                return "Sorry";
         }
 
         public int getCredits() throws RemoteException {
-            // TODO Auto-generated method stub
-            return 0;
+            return Users.get(name).credits;
         }
 
         public void getOutputOf(int id) throws RemoteException {
@@ -259,8 +293,10 @@ public class Manager {
         }
 
         public boolean prepareTask(Task t) throws RemoteException {
-            // TODO Auto-generated method stub
-            return false;
+            MTask mt = new MTask(t);
+            mt.status = TASKSTATE.prepared;
+            Tasks.put(Integer.valueOf(mt.id), mt);
+            return true;
         }
     }
     

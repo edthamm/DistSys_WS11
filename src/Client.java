@@ -20,7 +20,6 @@ public class Client {
     private PrintWriter sout;
     private BufferedReader sin;
     private File tdir;
-    private LinkedList<Task> taskList = new LinkedList<Task>(); 
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = false;
 
@@ -118,14 +117,6 @@ public class Client {
             prepare(in[1],in[2]);
            return false; 
         }
-        if(in[0].contentEquals("!requestEngine")){
-            if(in.length != 2){
-                System.out.print("Invalid parameters. Usage: !requestEngine taskid.\n");
-                return false;
-            }
-            requestEngine(Integer.parseInt(in[1]));
-            return false; 
-        }
         if(in[0].contentEquals("!executeTask")){
             if(in.length != 3){
                 System.out.print("Invalid parameters. Usage: !executeTask taskid startscript.\n");
@@ -187,7 +178,7 @@ public class Client {
      * Preconditions: none
      * Postconditions: new task with unique taskid prepared
      */
-    private void prepare(String task, String type) throws IOException{
+    private void prepare(String task, String type) throws IOException{        
         TASKTYPE typ = null;
         if(type.contentEquals("LOW")){
             typ = TASKTYPE.LOW;
@@ -208,48 +199,30 @@ public class Client {
                 }
             }
         }
-        //TODO retest and maybe add +"/"
         File f = new File(tdir.getAbsolutePath()+File.separator+task);
         if(!f.exists()){
             System.out.print("No such file exists: "+f.getAbsolutePath()+"\n");
             return;
         }
+        byte[] ba = new byte[(int) f.length()];  
+        FileInputStream fis = new FileInputStream(f);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        bis.read(ba,0,ba.length);
         
-        Task t = new Task(task,typ);
-        t.status = TASKSTATE.prepared;
-        taskList.add(t.id - 1, t);
-        System.out.print("Task wit id "+t.id+" prepared.\n");
-        return;
+        Task t = new Task(task, typ, ba.length, ba);
+        //TODO send this to manager
+        
     }
     
-    /*
-     * Preconditions: none
-     * Postconditions: engine assignment request is sent
-     */
-    private void requestEngine(int id){
-        Task t = getTask(id);
-        
-        if(t == null || t.status != TASKSTATE.prepared){
-            System.out.print("Task not prepared.\n");
-            return;
-        }
-        else{
-            if(sout == null){
-                System.out.print("Must be logged in.\n");
-                return;
-            }
-            sout.println("!requestEngine "+t.id+" "+t.type.toString());
-            return;
-        }
-        
-    }
     
     /*
      * Preconditions: logged in, taskEngine assigned to task, task file still exists
      * Postconditions: task starts executing
      */
     private void executeTask(int id, String script){
-        Socket tsock = null;
+        //TODO remote
+        
+        /*Socket tsock = null;
         PrintWriter tout = null;
         DataOutputStream dout = null;
         BufferedReader tin = null;
@@ -324,7 +297,7 @@ public class Client {
             return;
         }
         System.out.print("Transmitted Task!\n");
-        t.status = TASKSTATE.executing;
+        t.status = TASKSTATE.executing;*/
 
     }
     
@@ -350,18 +323,7 @@ public class Client {
      * Postconditions: Task info printed to std out
      */
     private void info(int id){
-        Task t = getTask(id);
-        if(t == null){
-            System.out.print("No such Task.\n");
-            return;
-        }
-        else{
-            System.out.print("Task "+id+" ("+t.name+")\n"+
-                             "Type: "+t.type.toString()+"\n"+
-                             "Assigned engine: "+ t.taskEngine+":"+t.port+"\n"+
-                             "Status: "+t.status.toString()+"\n");
-            return;
-        }
+    //TODO fit to remote
         
     }
     
@@ -379,22 +341,6 @@ public class Client {
     
     // Assistance functions
     
-    
-    
-    /*
-     * Preconditions: none
-     * Postconditions: returns task if task with given id exists, null otherwise
-     */
-    private Task getTask(int id){
-        Task t;
-        try{
-            t = taskList.get(id - 1);
-        }
-        catch(IndexOutOfBoundsException e){
-            t = null;
-        }
-        return t;
-    }
     
     /*
      * Preconditions: Logged in to Scheduler
@@ -450,28 +396,9 @@ public class Client {
                     System.out.print(rcv +"\n");
                     return;
                 }
-                if(rcv.contains("Assigned engine:")){
-                    String rs[] = rcv.split(" ");
-                    System.out.print(rs[6]+"\n");
-                    taskList.get(Integer.parseInt(rs[6])-1).port = Integer.parseInt(rs[3]);
-                    taskList.get(Integer.parseInt(rs[6])-1).taskEngine = rs[2];
-                    taskList.get(Integer.parseInt(rs[6])-1).status = TASKSTATE.assigned;
-                    System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[3]+"\n");
-                    rcv = "";
-                }
-                if(rcv.contains("Started execution")){
-                    String rs[] = rcv.split(" ");
-                    taskList.get(Integer.parseInt(rs[4])-1).status = TASKSTATE.executing;
-                    rcv = "";
-                }
                 if(rcv.contains("Not enough capacity. Try again later.")){
                     System.out.print("Not enough capacity. Try again later.\n");
                     rcv = "";
-                }
-                if(rcv.contains("Finished Task")){
-                    String rs[] = rcv.split(" ");
-                    taskList.get(Integer.parseInt(rs[2])-1).status = TASKSTATE.finished;
-                    return;
                 }
                 if(!rcv.contentEquals("")){
                     System.out.print(rcv +"\n");
@@ -515,22 +442,7 @@ public class Client {
         }
     }
     
-    private static class Task{
-        public final int id;
-        public String name;
-        public TASKTYPE type;
-        static int idCount = 0;
-        public int port = 0;
-        public String taskEngine = "none";
-        public TASKSTATE status;
-        
-        public Task(String n, TASKTYPE t){
-            id = ++idCount;
-            name = n;
-            type = t;
-        }
-        
-    }
+
     
     public static void main (String args[]){
         
