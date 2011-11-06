@@ -278,6 +278,7 @@ public class GTEngine extends AbstractServer {
                     toCl.println(tid+" Not enough capacity. Try again later.");
                 }
                 else{
+                    toCl.println(tid+" execution started.");
                     //Replace name in cmd string.
                     String rpl = tname+num;
                     execln = execln.replace(tname, rpl);

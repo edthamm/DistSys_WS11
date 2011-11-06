@@ -9,7 +9,6 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.LinkedList;
 import java.util.concurrent.*;
 
 public class Client {
@@ -162,12 +161,7 @@ public class Client {
      * Postconditions: logged out
      */
     private void logout(){
-        if(sout == null){
-            System.out.print("Must be logged in.\n");
-        }
-        else{
-            sout.println("!logout");
-        }
+        //TODO remoteS
     }
     
     
@@ -221,84 +215,6 @@ public class Client {
      */
     private void executeTask(int id, String script){
         //TODO remote
-        
-        /*Socket tsock = null;
-        PrintWriter tout = null;
-        DataOutputStream dout = null;
-        BufferedReader tin = null;
-        
-        Task t = getTask(id);
-        if(t == null){
-            System.out.print("No Task with id: "+id+" prepared.\n");
-            return;
-        }
-        if(t.status != TASKSTATE.assigned){
-            System.out.print("Status of task is "+t.status.toString()+" but must be assigned for execute to work.\n");
-            return;
-        }
-        
-        try {
-            tsock = new Socket(t.taskEngine,t.port);
-            dout = new DataOutputStream(tsock.getOutputStream());
-            tout = new PrintWriter(tsock.getOutputStream());
-        } catch (UnknownHostException e) {
-            System.out.print("The Host Task Engine "+t.taskEngine+" is unknown. Can not connect.\n");
-            if(DEBUG){e.printStackTrace();}
-            return;
-        } catch (IOException e) {
-            System.out.print("Sorry encounterd a problem in opening the outgoing Task Engine socket.\n");
-            if(DEBUG){e.printStackTrace();}
-        }
-        
-        try {
-            tin = new BufferedReader(new InputStreamReader(tsock.getInputStream()));
-        } catch (IOException e) {
-            System.out.print("Could not listen for replay from Task Engine.\n");
-            if(DEBUG){e.printStackTrace();}
-            return;
-        }
-    
-        File f = new File(tdir.getAbsolutePath()+File.separator+t.name);
-        //Transmit the command string string.
-        //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
-        tout.println(script);
-        tout.println(id);
-        tout.println(t.name);
-        tout.println(t.type.toString());
-        tout.println(f.length());
-        tout.flush();
-        try {
-            tin.readLine(); //this is for sync; a Send will be received maybe useful for later implementations
-        } catch (IOException e1) {
-            if(DEBUG){e1.printStackTrace();}
-        }
-        
-        
-        
-
-        Listener L = new Listener(tsock, tin);
-        L.start();
-
-        
-        byte[] ba = new byte[(int) f.length()];  //this is not great but it works
-        try {
-            FileInputStream fis = new FileInputStream(f);
-            BufferedInputStream bis = new BufferedInputStream(fis);
-            bis.read(ba,0,ba.length);
-            dout.write(ba,0,ba.length);
-            dout.flush();
-        } catch (FileNotFoundException e) {
-            System.out.print("Sorry but "+t.name+" seems to be inexistant.\n");
-            if(DEBUG){e.printStackTrace();}
-            return;
-        } catch (IOException e) {
-            System.out.print("There was a problem with the remote connection, could not send file.\n");
-            if(DEBUG){e.printStackTrace();}
-            return;
-        }
-        System.out.print("Transmitted Task!\n");
-        t.status = TASKSTATE.executing;*/
-
     }
     
     
