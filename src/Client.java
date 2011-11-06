@@ -8,7 +8,6 @@
  */
 
 import java.io.*;
-import java.net.*;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -132,7 +131,7 @@ public class Client implements Callbackable{
      * Postconditions: user input processed and handling function called accordingly
      */
     private boolean checkAction(String[] in) throws NumberFormatException, IOException{
-        
+        //both
         if(in[0].contentEquals("!login")){
             if(in.length != 3){
                 System.out.print("Invalid parameters. Usage: !login username password.\n");
@@ -150,9 +149,35 @@ public class Client implements Callbackable{
         if(in[0].contentEquals("!logout")){
             logout();
             return false; 
-        }        
+        }
+        //admin
+        if(in[0].contentEquals("!getPricingCurve")){
+            getPcurve();
+            return false; 
+        }
+        if(in[0].contentEquals("!setPriceStep")){
+            if(in.length != 3){
+               System.out.print("Invalid parameters. Usage: !stePriceStep taskCount percent.\n");
+               return false;
+            }
+            setPstep(Integer.parseInt(in[1]),Integer.parseInt(in[2]));
+           return false; 
+        }
+        //company
         if(in[0].contentEquals("!list")){
             list();
+            return false; 
+        }
+        if(in[0].contentEquals("!credits")){
+            credits();
+            return false; 
+        }
+        if(in[0].contentEquals("!buy")){
+            if(in.length != 2){
+                System.out.print("Invalid parameters. Usage: !buy amount.\n");
+                return false;
+            }
+            buyC(Integer.parseInt(in[1]));
             return false; 
         }
         if(in[0].contentEquals("!prepare")){
@@ -179,6 +204,7 @@ public class Client implements Callbackable{
             info(Integer.parseInt(in[1]));
             return false; 
         }
+        //exit
         if(in[0].contentEquals("!exit")){
             exit(); 
             return true;
@@ -190,9 +216,33 @@ public class Client implements Callbackable{
     }
     
     
-    // Scheduler Connection up/down
-    
-    
+    private void buyC(int parseInt) throws RemoteException {
+        if(comp == null){System.out.println("Your not a Company!");}
+        if(comp.buyCredits(parseInt)){
+            System.out.println("You have bought "+parseInt+" Credits. Your balance now is: " +comp.getCredits());
+        }
+    }
+
+
+    private void credits() throws RemoteException {
+        if(comp == null){System.out.println("Your not a Company!");}
+        System.out.println("You have: "+comp.getCredits());
+        
+    }
+
+
+    private void setPstep(int i, int j) throws RemoteException {
+        if(admin == null){System.out.println("Your not an Admin!");}
+        admin.setPrice(i,j);
+    }
+
+
+    private void getPcurve() {
+        if(admin == null){System.out.println("Your not an Admin!");}
+        //TODO
+        
+    }
+
     
     /*
      * Preconditions: user, pass not null
@@ -221,8 +271,19 @@ public class Client implements Callbackable{
      * Preconditions: logged in
      * Postconditions: logged out
      */
-    private void logout(){
-        //TODO remote
+    private void logout() throws RemoteException{
+        if(admin != null){
+            admin.logout();
+            admin = null;
+            return;
+        }
+        if(comp != null){
+            comp.logout();
+            comp = null;
+            return;
+        }
+        System.out.println("Need to login first!");
+        return;
     }
     
     
@@ -233,7 +294,8 @@ public class Client implements Callbackable{
      * Preconditions: none
      * Postconditions: new task with unique taskid prepared
      */
-    private void prepare(String task, String type) throws IOException{        
+    private void prepare(String task, String type) throws IOException{
+        if(comp == null){System.out.println("Your not a Company!");}
         TASKTYPE typ = null;
         if(type.contentEquals("LOW")){
             typ = TASKTYPE.LOW;
@@ -265,7 +327,7 @@ public class Client implements Callbackable{
         bis.read(ba,0,ba.length);
         
         Task t = new Task(task, typ, ba.length, ba);
-        //TODO send this to manager
+        comp.prepareTask(t);
         
     }
     
@@ -274,8 +336,9 @@ public class Client implements Callbackable{
      * Preconditions: logged in, taskEngine assigned to task, task file still exists
      * Postconditions: task starts executing
      */
-    private void executeTask(int id, String script){
-        //TODO remote
+    private void executeTask(int id, String script) throws RemoteException{
+        if(comp == null){System.out.println("Your not a Company!");}
+        comp.executeTask(id, script);
     }
     
     
@@ -287,6 +350,7 @@ public class Client implements Callbackable{
      * Postconditions: printed all files in task directory to stdout
      */
     private void list(){
+        if(comp == null){System.out.println("Your not a Company!");}
         String cont[] = tdir.list();
         int i = 0;
         while(i < cont.length){
@@ -299,8 +363,9 @@ public class Client implements Callbackable{
      * Preconditions: none
      * Postconditions: Task info printed to std out
      */
-    private void info(int id){
-    //TODO fit to remote
+    private void info(int id) throws RemoteException{
+        if(comp == null){System.out.println("Your not a Company!");}
+        comp.getTaskInfo(id);
         
     }
     
@@ -308,96 +373,19 @@ public class Client implements Callbackable{
      * Preconditions: none
      * Postconditions: all open handles are released, program terminates
      */
-    private void exit(){
+    private void exit() {
         System.out.print("Exiting on request. Good Bye!\n");
-        logout();
+        try {
+            logout();
+        } catch (RemoteException e1) {
+            if(DEBUG){e1.printStackTrace();}
+        }
         e.shutdownNow();
 
     }
-    
-    
-    // Assistance functions
-    
-    
-  
-    
-    
-    //  Nested Classes and Main
-    
-    
-    private class Listener extends Thread{
-        
-        private Socket lsock;
-        private BufferedReader lin;
-        
-        public Listener(Socket s, BufferedReader i){
-            lsock = s;
-            lin = i;
-        }
-        
-        /*
-         * Preconditions: sock,in not null 
-         * Postconditions: continuous listening for messages from server
-         */       
-        public void run(){
-            String rcv = "nothing recieved\n";
-            while(lsock.isConnected()){
-                try {
-                    rcv = lin.readLine();
-                } catch (IOException e) {
-                    System.out.print("Could not read from socket.\n");
-                    if(DEBUG){e.printStackTrace();}
-                    Listener.this.exit();
-                }
-                try{
-                if(rcv.contentEquals("Successfully logged out.") || rcv.contains("Wrong company or password.")){
-                    System.out.print(rcv +"\n");
-                    return;
-                }
-                if(rcv.contains("Not enough capacity. Try again later.")){
-                    System.out.print("Not enough capacity. Try again later.\n");
-                    rcv = "";
-                }
-                if(!rcv.contentEquals("")){
-                    System.out.print(rcv +"\n");
-                }
-                }
-                catch(NullPointerException e){
-                    if(DEBUG){e.printStackTrace();}
-                    System.out.println("Server hung up. Seems he went down hard.");
-                    return;
-                }
-            }
-            return;
 
-        }
-        
-        private void exit(){
-            try {
-                lin.close();
-                lsock.close();
-            } catch (IOException e) {
-                if(DEBUG){e.printStackTrace();}
-            }
-            exit();
-            
-        }
-        
-        /*
-         * Preconditions: thread is running
-         * Postconditions: thread terminated
-         */
-        public void interrupt(){
-            try{
-                lsock.close();
-                lin.close();
-            }
-            catch(Exception e){
-                //do nothing about it you are going down forcefully
-            }
-            return;
-        }
-    }
+    //  Nested Classes and Main
+
     
 
     
