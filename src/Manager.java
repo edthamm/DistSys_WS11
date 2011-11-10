@@ -58,9 +58,9 @@ public class Manager {
     }
     
     private void setupRMI(){
-        if (System.getSecurityManager() == null) {
+        /*if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
-        }
+        } ***according to spec this shall not be done in this lab.*** */ 
         
         try {
             Loginable l = (Loginable) UnicastRemoteObject.exportObject(new LoginHandler(), 0);

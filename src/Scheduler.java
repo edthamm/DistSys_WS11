@@ -144,6 +144,10 @@ public class Scheduler extends AbstractServer {
             }
             //maybe do err msgs
         }
+        es.shutdown();
+        while(!es.isTerminated()){
+            //wait for all requests to finish yeah yeah busy waiting is bad practice
+        }
         return;
 
     }
@@ -529,12 +533,13 @@ public class Scheduler extends AbstractServer {
         private String ip = "";
         private int tcp = 0;
         private int udp = 0;
-        private GTSTATUS status;
+        private volatile GTSTATUS status;
         private int minE = 0;
         private int maxE = 0;
         public volatile int load = 0;
-        private boolean isAlive = true;
+        private volatile boolean isAlive = true;
         Timer time;
+        //if the volatiles dont work, create synced get/set;
         
         public GTEntry(String ip, int tcp, int udp, GTSTATUS status, int minE, int maxE , int load){
             this.ip = ip;

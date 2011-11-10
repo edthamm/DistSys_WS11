@@ -272,9 +272,9 @@ public class Client implements Callbackable{
      * Postconditions: Connection is build, reading and writing lines are opened. User is logged in to server, or error is thrown.
      */
     private Comunicatable login(String user, String pass){
-        if (System.getSecurityManager() == null) {
+        /*if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
-        }
+        } ***see manager*** */
         try {
             if(admin != null || comp != null){System.out.println("Already logged in.");}
             Registry r = LocateRegistry.getRegistry(mancomp, port);
