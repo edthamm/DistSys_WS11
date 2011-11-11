@@ -13,6 +13,7 @@ public class MTask {
     public TASKSTATE status;
     public long start;
     public long finish;
+    public String cost = "unknown";
     public String output;
     public String owner;
     

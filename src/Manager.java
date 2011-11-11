@@ -68,7 +68,7 @@ public class Manager {
             r.rebind(bindingName, l);
             System.out.println("Bound login to"+bindingName);
         } catch (RemoteException e) {
-            // TODO Auto-generated catch block
+
             if(DEBUG){e.printStackTrace();}
         }
     }
@@ -91,7 +91,8 @@ public class Manager {
     
     private void readProperties() throws FileNotFoundException{
         readRegistry();
-        readUsers();
+        //readUsers();
+        Users.put("test", new User("test", "test", 300));
     }
     
     private void readRegistry() throws FileNotFoundException{
@@ -135,13 +136,13 @@ public class Manager {
             java.util.Properties users = new java.util.Properties();
             try {
                 users.load(in);
-                Set<String> userNames = users.stringPropertyNames();
+                Set<String> userNames = users.stringPropertyNames();//TODO this is not in correct order
                 String name = "";
                 String pw = "";
                 
                 for (String userName : userNames){
                     String attribute = users.getProperty(userName);
-                    String user[] = userName.split(".");
+                    String user[] = userName.split(".");//TODO this does not split
                     if(user.length == 1){
                         name = userName;
                         pw = attribute;
@@ -263,7 +264,7 @@ public class Manager {
         }
         
         public boolean verify(String pw){
-            if(pw.contentEquals(password)){
+            if(pw.contentEquals(password)&&callback == null){//only one comapny at a time
                 return true;
             }
             return false;
@@ -316,17 +317,48 @@ public class Manager {
         }
 
         public void getOutputOf(int id) throws RemoteException {
-            // TODO Auto-generated method stub
+            if(Tasks.containsKey(id)){
+                MTask T = Tasks.get(id);
+                if(T.owner.contentEquals(name)){
+                    cb.sendMessage(T.output);
+                    return;
+                }
+                else{
+                    cb.sendMessage("This Task does not belong to you!");
+                    return;
+                }
+            }
+            cb.sendMessage("Sorry. Task inexistant.");
             
         }
 
         public void getTaskInfo(int id) throws RemoteException {
-            // TODO Auto-generated method stub
+            if(Tasks.containsKey(id)){
+                MTask t = Tasks.get(id);
+                if(t.owner.contentEquals(name)){
+                    cb.sendMessage("Task: "+id+" ("+t.tname+")\n"+
+                                   "Type: "+t.ttype.toString()+"\n"+
+                                   "Assigned Engine: "+t.taskEngine+":"+t.port+"\n"+
+                                   "Status: "+t.status.toString()+"\n"+
+                                   "Costs: "+t.cost);
+                    return;
+                }
+                else{
+                    cb.sendMessage("This Task does not belong to you!");
+                    return;
+                }
+            }
+            cb.sendMessage("Sorry. Task inexistant.");
+            
             
         }
 
         public void logout() throws RemoteException {
-            // TODO Auto-generated method stub
+            Callbackable c = cb;
+            c.sendMessage("Logging out...");
+            Users.get(name).callback = null;
+            c.sendMessage("done");
+            
         }
 
         public boolean prepareTask(Task t) throws RemoteException {
@@ -482,7 +514,9 @@ public class Manager {
                 m.finish = System.currentTimeMillis();
                 cb.sendMessage("Execution of Task "+m.id+" finished.");
                 
-                //TODO reduce credits of company
+                long time = m.finish-m.start;
+                int cost = calcCost(time);
+                Users.get(m.owner).credits -= cost;
                 
                 tout.close();
                 dout.close();
@@ -491,10 +525,30 @@ public class Manager {
                 return;
                 
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 if(DEBUG){e.printStackTrace();}
             }
 
+        }
+
+        private int calcCost(long time) {
+            User u = Users.get(m.owner);
+            int total = u.high+u.middle+u.low;
+            Integer max = 0;
+            int price;
+            double discount = 0;
+            Enumeration<Integer> k = Prices.keys();
+            while (k.hasMoreElements()){
+                Integer s = k.nextElement();
+                int t = s.intValue();
+                if(total > t && s > max){ //falls die anzahl der gesamtaufträge höher ist als diese stufe, und keine höhere stufe vorher angetroffen wurde
+                    discount = Prices.get(s);                   
+                }
+            }
+            
+            discount= discount/100;
+            price = Double.valueOf(((10*time)-((10*time)*discount))).intValue();//TODO check espec for minute
+            
+            return price;
         }
         
         

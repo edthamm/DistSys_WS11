@@ -24,7 +24,7 @@ public class Client implements Callbackable{
     private String sname;
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private Callbackable cb;
     private Adminable admin = null;
     private Companyable comp = null;
@@ -375,7 +375,7 @@ public class Client implements Callbackable{
      * Postconditions: printed all files in task directory to stdout
      */
     private void list(){
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(admin != null){System.out.println("Your not a Company!");return;}
         String cont[] = tdir.list();
         int i = 0;
         while(i < cont.length){
