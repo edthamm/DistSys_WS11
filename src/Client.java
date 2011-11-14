@@ -25,6 +25,7 @@ public class Client implements Callbackable{
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = true;
+    private static final boolean LAB = true;
     private Callbackable cb;
     private Adminable admin = null;
     private Companyable comp = null;
@@ -272,9 +273,12 @@ public class Client implements Callbackable{
      * Postconditions: Connection is build, reading and writing lines are opened. User is logged in to server, or error is thrown.
      */
     private Comunicatable login(String user, String pass){
-        /*if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        } ***see manager*** */
+        if(!LAB){
+            if (System.getSecurityManager() == null) {
+                System.setSecurityManager(new SecurityManager());
+            }
+        }
+        
         try {
             if(admin != null || comp != null){System.out.println("Already logged in.");}
             Registry r = LocateRegistry.getRegistry(mancomp, port);

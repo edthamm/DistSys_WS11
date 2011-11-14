@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 
 public class Manager {
     private static final boolean DEBUG = true;
+    private static final boolean LAB = true;
     private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort";
     private String bindingName;
     private String schedHost;
@@ -58,9 +59,11 @@ public class Manager {
     }
     
     private void setupRMI(){
-        /*if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        } ***according to spec this shall not be done in this lab.*** */ 
+        if(!LAB){
+            if (System.getSecurityManager() == null) {
+                System.setSecurityManager(new SecurityManager());
+            }
+        }
         
         try {
             Loginable l = (Loginable) UnicastRemoteObject.exportObject(new LoginHandler(), 0);
