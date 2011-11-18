@@ -1,4 +1,6 @@
+import java.rmi.Remote;
 
-public interface Comunicatable {
+
+public interface Comunicatable extends Remote{
 
 }

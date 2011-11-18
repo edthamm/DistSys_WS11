@@ -432,6 +432,7 @@ public class Client implements Callbackable{
         try{
             c = new Client(args[0], args[1]);
             c.readRegProp();// catch fnf
+            c.createStub();
             c.run();
         } catch(NumberFormatException e){
             System.out.print("Second argument must be an Integer value.\n");

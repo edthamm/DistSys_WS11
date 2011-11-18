@@ -23,7 +23,6 @@ public class Manager {
     private Socket schedsock;
     private PrintWriter schedout;
     private BufferedReader schedin;
-    private ExecutorService TaskEServ = Executors.newCachedThreadPool();
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
     private ConcurrentHashMap<Integer,Double> Prices = new ConcurrentHashMap<Integer,Double>();
     private ConcurrentHashMap<Integer,MTask> Tasks = new ConcurrentHashMap<Integer,MTask>();
@@ -69,7 +68,7 @@ public class Manager {
             Loginable l = (Loginable) UnicastRemoteObject.exportObject(new LoginHandler(), 0);
             Registry r = LocateRegistry.createRegistry(regPort);
             r.rebind(bindingName, l);
-            System.out.println("Bound login to"+bindingName);
+            System.out.println("Bound login to "+bindingName);
         } catch (RemoteException e) {
 
             if(DEBUG){e.printStackTrace();}
@@ -145,7 +144,7 @@ public class Manager {
                 
                 for (String userName : userNames){
                     String attribute = users.getProperty(userName);
-                    String user[] = userName.split(".");//TODO this does not split
+                    String user[] = userName.split("\\.");//TODO this does not split
                     if(user.length == 1){
                         name = userName;
                         pw = attribute;
@@ -240,139 +239,7 @@ public class Manager {
         
     }
     
-    private class User{
-        private String name = "";
-        private String password = ""; //this is inherently unsafe in production use encryption
-        private int low = 0;
-        private int middle = 0;
-        private int high = 0;
-        private volatile int credits = 0;
-        private Callbackable callback = null;
-        
-        public User(String n, String pw, int c){
-            name = n;
-            password = pw;
-            credits = c;
-        }
-        public User(String n, String pw){
-            name = n;
-            password = pw;
-        }
-        
-        public String toString(){
-            if(callback != null){
-                return(name+" (online) LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
-            }
-            return(name+" (offline) LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
-        }
-        
-        public boolean verify(String pw){
-            if(pw.contentEquals(password)&&callback == null){//only one comapny at a time
-                return true;
-            }
-            return false;
-        }
-    }
-    private class Admin extends User{
-        
-        public Admin(String n, String pw){
-            super(n,pw);
-        }
-        
-        public String toString(){
-            if(super.callback != null){
-                return(super.name+" (online)");
-            }
-            return(super.name+" (offline)");
-        }
-        
-
-    }
-    
-    private class Remote implements Companyable{
-        private String name ="";
-        private Callbackable cb = Users.get(name).callback;
-        
-        public Remote(String n){
-            name = n;
-        }
-
-        public boolean buyCredits(int amount) throws RemoteException {
-            Users.get(name).credits += amount;
-            return true;
-        }
-
-        public void executeTask(int id, String execln) throws RemoteException {
-            MTask t = Tasks.get(Integer.valueOf(id));
-            if(t == null){
-                cb.sendMessage("No Task with id: "+id+" known.");
-                return;
-            }
-            if(t.owner.contentEquals(name)){
-                t.execln = execln;
-                TaskEServ.execute(new TaskExecutor(t, cb));
-            }
-                return;
-        }
-
-        public int getCredits() throws RemoteException {
-            return Users.get(name).credits;
-        }
-
-        public void getOutputOf(int id) throws RemoteException {
-            if(Tasks.containsKey(id)){
-                MTask T = Tasks.get(id);
-                if(T.owner.contentEquals(name)){
-                    cb.sendMessage(T.output);
-                    return;
-                }
-                else{
-                    cb.sendMessage("This Task does not belong to you!");
-                    return;
-                }
-            }
-            cb.sendMessage("Sorry. Task inexistant.");
-            
-        }
-
-        public void getTaskInfo(int id) throws RemoteException {
-            if(Tasks.containsKey(id)){
-                MTask t = Tasks.get(id);
-                if(t.owner.contentEquals(name)){
-                    cb.sendMessage("Task: "+id+" ("+t.tname+")\n"+
-                                   "Type: "+t.ttype.toString()+"\n"+
-                                   "Assigned Engine: "+t.taskEngine+":"+t.port+"\n"+
-                                   "Status: "+t.status.toString()+"\n"+
-                                   "Costs: "+t.cost);
-                    return;
-                }
-                else{
-                    cb.sendMessage("This Task does not belong to you!");
-                    return;
-                }
-            }
-            cb.sendMessage("Sorry. Task inexistant.");
-            
-            
-        }
-
-        public void logout() throws RemoteException {
-            Callbackable c = cb;
-            c.sendMessage("Logging out...");
-            Users.get(name).callback = null;
-            c.sendMessage("done");
-            
-        }
-
-        public boolean prepareTask(Task t) throws RemoteException {
-            MTask mt = new MTask(t);
-            mt.status = TASKSTATE.prepared;
-            Tasks.put(Integer.valueOf(mt.id), mt);
-            return true;
-        }
-    }
-    
-    private class RAdmin implements Adminable{
+    public class RAdmin implements Adminable{
         private String name ="";
         
         public RAdmin(String n){
@@ -412,9 +279,10 @@ public class Manager {
                     u.callback = cb;
                     cb.sendMessage("Logged in.");
                     if(u instanceof Admin){
-                        return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname));
+                        return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname), 0);
                     }
-                    return (Comunicatable) UnicastRemoteObject.exportObject(new Remote(uname));
+                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,Users,Tasks, Prices, schedin, schedout), 0);
+                    return retval;
                 }
             }
             cb.sendMessage("Wrong username or Password or account already in use.");
@@ -423,139 +291,6 @@ public class Manager {
         
     }
     
-    private class TaskExecutor implements Runnable{
-        MTask m;
-        Callbackable cb;
-        
-        public TaskExecutor(MTask mt, Callbackable c){
-            m = mt;
-            cb = c;
-        }
-
-        public void run() {
-            try{
-            schedout.println("!requestEngine "+m.id+" "+m.ttype.toString());
-            String rcv = schedin.readLine();//TODO will i get the next or the one concerning me?
-            //TODO assign fail and win
-            }
-            catch(IOException e){
-                if(DEBUG){e.printStackTrace();}
-            }
-            
-            
-            //Start talking to GTE
-            Socket tsock = null;
-            PrintWriter tout = null;
-            DataOutputStream dout = null;
-            BufferedReader tin = null;
-            
-            
-            try {
-                tsock = new Socket(m.taskEngine,m.port);
-                dout = new DataOutputStream(tsock.getOutputStream());
-                tout = new PrintWriter(tsock.getOutputStream());
-            } catch (UnknownHostException e) {
-                System.out.print("The Host Task Engine "+m.taskEngine+" is unknown. Can not connect.\n");
-                if(DEBUG){e.printStackTrace();}
-                return;
-            } catch (IOException e) {
-                System.out.print("Sorry encounterd a problem in opening the outgoing Task Engine socket.\n");
-                if(DEBUG){e.printStackTrace();}
-            }
-            
-            try {
-                tin = new BufferedReader(new InputStreamReader(tsock.getInputStream()));
-            } catch (IOException e) {
-                System.out.print("Could not listen for replay from Task Engine.\n");
-                if(DEBUG){e.printStackTrace();}
-                return;
-            }
-        
-            //Transmit the command string string.
-            //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
-            tout.println(m.execln);
-            tout.println(m.id);
-            tout.println(m.tname);
-            tout.println(m.ttype.toString());
-            tout.println(m.flength);
-            tout.flush();
-            try {
-                tin.readLine(); //this is for sync; a Send will be received maybe useful for later implementations
-            } catch (IOException e1) {
-                if(DEBUG){e1.printStackTrace();}
-            }
-            
-
-            try {
-                byte[] ba = m.binary;
-                dout.write(ba,0,ba.length);
-                dout.flush();
-            }
-                catch (IOException e) {
-                System.out.print("There was a problem with the remote connection, could not send file.\n");
-                if(DEBUG){e.printStackTrace();}
-                return;
-            }
-                
-                
-            try {
-                String in;
-                if((in = tin.readLine()).contains("execution started")){
-                    m.status = TASKSTATE.executing;
-                    m.start = System.currentTimeMillis();
-                }
-                else{
-                    m.status = TASKSTATE.prepared;
-                    cb.sendMessage("Currently no engine available, try again later.");
-                    return;
-                }
-
-                while((in = tin.readLine())!= null){
-                    m.output.concat(in);
-                }
-                m.status = TASKSTATE.finished;
-                m.finish = System.currentTimeMillis();
-                cb.sendMessage("Execution of Task "+m.id+" finished.");
-                
-                long time = m.finish-m.start;
-                int cost = calcCost(time);
-                Users.get(m.owner).credits -= cost;
-                
-                tout.close();
-                dout.close();
-                tin.close();
-                tsock.close();
-                return;
-                
-            } catch (IOException e) {
-                if(DEBUG){e.printStackTrace();}
-            }
-
-        }
-
-        private int calcCost(long time) {
-            User u = Users.get(m.owner);
-            int total = u.high+u.middle+u.low;
-            Integer max = 0;
-            int price;
-            double discount = 0;
-            Enumeration<Integer> k = Prices.keys();
-            while (k.hasMoreElements()){
-                Integer s = k.nextElement();
-                int t = s.intValue();
-                if(total > t && s > max){ //falls die anzahl der gesamtaufträge höher ist als diese stufe, und keine höhere stufe vorher angetroffen wurde
-                    discount = Prices.get(s);                   
-                }
-            }
-            
-            discount= discount/100;
-            price = Double.valueOf(((10*time)-((10*time)*discount))).intValue();//TODO check espec for minute
-            
-            return price;
-        }
-        
-        
-        
-    }
+    
 
 }
