@@ -95,6 +95,7 @@ public class Manager {
         readRegistry();
         //readUsers();
         Users.put("test", new User("test", "test", 300));
+        Users.put("testa", new Admin("testa", "testa"));
     }
     
     private void readRegistry() throws FileNotFoundException{
@@ -239,7 +240,7 @@ public class Manager {
         
     }
     
-    public class RAdmin implements Adminable{
+    private class RAdmin implements Adminable{
         private String name ="";
         
         public RAdmin(String n){

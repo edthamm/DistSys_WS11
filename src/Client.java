@@ -244,7 +244,7 @@ public class Client implements Callbackable{
 
     private void credits() throws RemoteException {
         if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(comp == null){System.out.println("Your not a Company!"); return;}
         System.out.println("You have: "+comp.getCredits());
         
     }
@@ -411,7 +411,7 @@ public class Client implements Callbackable{
             if(DEBUG){e1.printStackTrace();}
         }
         e.shutdownNow();
-
+//TODO no clean exit
     }
 
     //  Nested Classes and Main
