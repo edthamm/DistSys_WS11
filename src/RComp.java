@@ -51,7 +51,7 @@ public class RComp implements Companyable{
         }
 
         public int getCredits() throws RemoteException {
-            return Users.get(name).credits;
+            return Users.get(name).getCredits();
         }
 
         public void getOutputOf(int id) throws RemoteException {
