@@ -2,16 +2,16 @@
 public class User {
         protected String name = "";
         private String password = ""; //this is inherently unsafe in production use encryption
-        int low = 0;
-        int middle = 0;
-        int high = 0;
-        volatile int credits = 0;
+        volatile int low = 0;
+        volatile int middle = 0;
+        volatile int high = 0;
+        private int credits = 0;
         protected Callbackable callback = null;
         
         public User(String n, String pw, int c){
             name = n;
             password = pw;
-            credits = c;
+            setCredits(c);
         }
         public User(String n, String pw){
             name = n;
@@ -30,5 +30,11 @@ public class User {
                 return true;
             }
             return false;
+        }
+        public synchronized void setCredits(int credits) {
+            this.credits = credits;
+        }
+        public synchronized int getCredits() {
+            return credits;
         }
 }

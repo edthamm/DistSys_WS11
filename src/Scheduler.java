@@ -114,12 +114,12 @@ public class Scheduler extends AbstractServer {
         Enumeration<GTEntry> ge = GTs.elements();
         while(ge.hasMoreElements()){
             gc = ge.nextElement();
-            if((gc.load+load) < 101 && (gc.maxE -gc.minE) < coef){
+            if((gc.getLoad()+load) < 101 && (gc.maxE -gc.minE) < coef){
                 g = gc;
                 coef = gc.maxE -gc.minE;
             }
         }
-        g.load = g.load+load;
+        g.setLoad(g.getLoad()+load);
         return g;
     }
     
@@ -358,7 +358,7 @@ public class Scheduler extends AbstractServer {
                 
                 sout.println("!Load");
                 sout.flush();
-                g.load = Integer.parseInt(sin.readLine());
+                g.setLoad(Integer.parseInt(sin.readLine()));
                 
                 sin.close();
                 sout.close();
@@ -438,10 +438,10 @@ public class Scheduler extends AbstractServer {
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
                     if (g.ip.contains(in.getAddress().toString().substring(1)) && g.tcp == Integer.parseInt(rcv[0])) {
-                        if (g.status != GTSTATUS.suspended) {//ignore isAlives of suspended engines
+                        if (g.getStatus() != GTSTATUS.suspended) {//ignore isAlives of suspended engines
                             try{
                             g.resetTimer();
-                            g.status = GTSTATUS.online;
+                            g.setStatus(GTSTATUS.online);
                             }
                             catch(NullPointerException e){
                                 if(DEBUG){e.printStackTrace();}
@@ -533,10 +533,26 @@ public class Scheduler extends AbstractServer {
         private String ip = "";
         private int tcp = 0;
         private int udp = 0;
-        private volatile GTSTATUS status;
+        private volatile GTSTATUS status1;
         private int minE = 0;
         private int maxE = 0;
-        public volatile int load = 0;
+        private volatile int load1 = 0;
+        public synchronized GTSTATUS getStatus() {
+            return status1;
+        }
+
+        public synchronized void setStatus(GTSTATUS status) {
+            this.status1 = status;
+        }
+
+        public synchronized int getLoad() {
+            return load1;
+        }
+
+        public synchronized void setLoad(int load) {
+            this.load1 = load;
+        }
+
         private volatile boolean isAlive = true;
         Timer time;
         //if the volatiles dont work, create synced get/set;
@@ -545,10 +561,10 @@ public class Scheduler extends AbstractServer {
             this.ip = ip;
             this.tcp = tcp;
             this.udp = udp;
-            this.status = status;
+            this.status1 = status;
             this.minE = minE;
             this.maxE = maxE;
-            this.load = load;            
+            this.load1 = load;            
         }
         
         public void startTimer(){
@@ -568,7 +584,7 @@ public class Scheduler extends AbstractServer {
         }
         
         public String toString(){
-            return("IP: "+ip+", TCP: "+tcp+", UDP: "+udp+", "+status.toString()+", Energy Signature: min "+minE+", max "+maxE+", Load: "+load+"%\n");
+            return("IP: "+ip+", TCP: "+tcp+", UDP: "+udp+", "+this.getStatus().toString()+", Energy Signature: min "+minE+", max "+maxE+", Load: "+this.getLoad()+"%\n");
         }
         
         private class Timeout extends TimerTask{
@@ -583,7 +599,7 @@ public class Scheduler extends AbstractServer {
                 	return;
                 }
                 else{
-                	g.status=GTSTATUS.offline;
+                	g.setStatus(GTSTATUS.offline);
                 }
                 return;
             }
@@ -617,12 +633,12 @@ public class Scheduler extends AbstractServer {
             Enumeration<GTEntry> gi = GTs.elements();
             while(gi.hasMoreElements()) {
             	GTEntry g = gi.nextElement();
-                if(g.status == GTSTATUS.online){
+                if(g.getStatus() == GTSTATUS.online){
                     gtsUp++;
-                    if(g.load == 0){
+                    if(g.getLoad() == 0){
                         emptyRunners++;
                     }
-                    if(g.load > 65){
+                    if(g.getLoad() > 65){
                         highUsers++;
                     }
                 }
@@ -634,7 +650,7 @@ public class Scheduler extends AbstractServer {
                 gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
-                    if(minEngine.minE < g.minE && g.status == GTSTATUS.suspended){
+                    if(minEngine.minE < g.minE && g.getStatus() == GTSTATUS.suspended){
                         minEngine = g;
                     }
                 }
@@ -646,7 +662,7 @@ public class Scheduler extends AbstractServer {
                 gi = GTs.elements();
                 while(gi.hasMoreElements()) {
                 	GTEntry g = gi.nextElement();
-                    if(maxEngine.maxE > g.maxE && g.status == GTSTATUS.online){
+                    if(maxEngine.maxE > g.maxE && g.getStatus() == GTSTATUS.online){
                         maxEngine = g;
                     }
                 }
@@ -657,13 +673,13 @@ public class Scheduler extends AbstractServer {
         
         private void suspend(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!suspend");
-            GTs.get(g.ip+g.tcp).status = GTSTATUS.suspended;
+            GTs.get(g.ip+g.tcp).setStatus(GTSTATUS.suspended);
             g.stopTimer();
         }
         
         private void activate(GTEntry g){
             (new CWorker()).sendToTaskEngine(g, "!wakeUp");
-            GTs.get(g.ip+g.tcp).status = GTSTATUS.offline; // will change to online once the first is alive is received cautious approach don't know if machine will respond
+            GTs.get(g.ip+g.tcp).setStatus(GTSTATUS.offline); // will change to online once the first is alive is received cautious approach don't know if machine will respond
             
         }
     }
