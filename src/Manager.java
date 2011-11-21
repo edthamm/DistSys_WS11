@@ -240,36 +240,6 @@ public class Manager {
         
     }
     
-    private class RAdmin implements Adminable{
-        private String name ="";
-        
-        public RAdmin(String n){
-            name = n;
-        }
-
-        public Set<Entry<Integer, Double>> getPrices() throws RemoteException {
-            return Prices.entrySet();
-        }
-
-        public void logout() throws RemoteException {
-            User me = Users.get(name);
-            me.callback.sendMessage("Thanks for using our services. Bye.");
-            me.callback = null;
-            
-        }
-
-        public void setPrice(int step, double discount) throws RemoteException {
-            if(Prices.containsKey(Integer.valueOf(step))){
-                Prices.replace(Integer.valueOf(step), Double.valueOf(discount));
-            }
-            else{
-                Prices.put(Integer.valueOf(step), Double.valueOf(discount));
-            }
-            return;           
-        }
-        
-    }
-    
     private class LoginHandler implements Loginable{
 
         public Comunicatable login(String uname, String password, Callbackable cb)
@@ -280,7 +250,7 @@ public class Manager {
                     u.callback = cb;
                     cb.sendMessage("Logged in.");
                     if(u instanceof Admin){
-                        return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname), 0);
+                        return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
                     Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,Users,Tasks, Prices, schedin, schedout), 0);
                     return retval;
