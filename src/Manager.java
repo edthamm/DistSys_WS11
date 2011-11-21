@@ -7,7 +7,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.*;
 
 //TODO do error handling on client input
@@ -19,7 +18,6 @@ public class Manager {
     private String bindingName;
     private String schedHost;
     private int schedTP;
-    private String regHost;
     private int regPort;
     private Socket schedsock;
     private PrintWriter schedout;
@@ -27,6 +25,7 @@ public class Manager {
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
     private ConcurrentHashMap<Integer,Double> Prices = new ConcurrentHashMap<Integer,Double>();
     private ConcurrentHashMap<Integer,MTask> Tasks = new ConcurrentHashMap<Integer,MTask>();
+    private LoginHandler LHandler = new LoginHandler();
 
     
     public Manager(String bn, String sh, int tp){
@@ -74,7 +73,7 @@ public class Manager {
         }
         
         try {
-            Loginable l = (Loginable) UnicastRemoteObject.exportObject(new LoginHandler(), 0);
+            Loginable l = (Loginable) UnicastRemoteObject.exportObject(LHandler, 0);
             Registry r = LocateRegistry.createRegistry(regPort);
             r.rebind(bindingName, l);
             System.out.println("Bound login to "+bindingName);
@@ -117,7 +116,7 @@ public class Manager {
                 for (String prop : registryprops){
                     String p = registry.getProperty(prop);
                     if(prop.contentEquals("registry.host")){
-                        regHost = p;
+                        //not important for me it is me
                     }
                     if(prop.contentEquals("registry.port")){
                         regPort = Integer.parseInt(p);

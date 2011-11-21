@@ -102,7 +102,10 @@ public class RComp implements Companyable{
         public boolean prepareTask(Task t) throws RemoteException {
             MTask mt = new MTask(t);
             mt.status = TASKSTATE.prepared;
+            mt.owner = name;
             Tasks.put(Integer.valueOf(mt.id), mt);
+            cb.sendMessage("Task prepared with id: "+ mt.id);
+            //TODO accounting taskstypes
             return true;
         }
         
