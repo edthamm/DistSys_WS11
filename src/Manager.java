@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 
-//TODO doe error handling on client imput
+//TODO do error handling on client input
 
 public class Manager {
     private static final boolean DEBUG = true;
@@ -93,9 +93,9 @@ public class Manager {
     
     private void readProperties() throws FileNotFoundException{
         readRegistry();
-        //readUsers();
-        Users.put("test", new User("test", "test", 300));
-        Users.put("testa", new Admin("testa", "testa"));
+        readUsers(true);
+        //Users.put("test", new User("test", "test", 300));
+        //Users.put("testa", new Admin("testa", "testa"));
     }
     
     private void readRegistry() throws FileNotFoundException{
@@ -132,34 +132,39 @@ public class Manager {
         }
     }
     
-    private void readUsers() throws FileNotFoundException{
+    private void readUsers(boolean fr) throws FileNotFoundException{
         InputStream in = null;
+        boolean firstrun = fr;
         in = ClassLoader.getSystemResourceAsStream("user.properties");
         if(in != null){
             java.util.Properties users = new java.util.Properties();
             try {
                 users.load(in);
-                Set<String> userNames = users.stringPropertyNames();//TODO this is not in correct order
-                String name = "";
-                String pw = "";
+                Set<String> userNames = users.stringPropertyNames();
                 
                 for (String userName : userNames){
                     String attribute = users.getProperty(userName);
-                    String user[] = userName.split("\\.");//TODO this does not split
-                    if(user.length == 1){
-                        name = userName;
-                        pw = attribute;
+                    String user[] = userName.split("\\.");
+                    if(firstrun){
+                        if(user.length == 1){
+                            Users.put(userName, new User(userName, attribute));
+                        }
                     }
-                    else{
+                    if(!firstrun && user.length != 1){
                         if(user[1].contentEquals("admin")){
                             if(attribute.contentEquals("true")){
-                                Users.put(name, new Admin(name, pw));
+                                String pw = Users.get(user[0]).password;
+                                Users.remove(user[0]);
+                                Users.put(user[0], new Admin(user[0], pw));
                             }
                         }
                         if(user[1].contentEquals("credits")){
-                            Users.put(name, new User(name, pw, Integer.parseInt(attribute)));
+                            Users.get(user[0]).setCredits(Integer.parseInt(attribute));
                         }
                     }
+                }
+                if(firstrun){
+                    readUsers(false);
                 }
                 
             } catch (IOException e) {

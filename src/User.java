@@ -1,7 +1,7 @@
 
 public class User {
         protected String name = "";
-        private String password = ""; //this is inherently unsafe in production use encryption
+        String password = ""; //this is inherently unsafe in production use encryption
         volatile int low = 0;
         volatile int middle = 0;
         volatile int high = 0;
