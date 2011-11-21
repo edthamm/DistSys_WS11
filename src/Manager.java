@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -42,8 +43,12 @@ public class Manager {
     private void exitRoutine(){
         try {
             schedsock.close();
+            Registry r = LocateRegistry.getRegistry(regPort);
+            r.unbind(bindingName);
             //TODO
         } catch (IOException e) {
+            if(DEBUG){e.printStackTrace();}
+        } catch (NotBoundException e) {
             if(DEBUG){e.printStackTrace();}
         }
     }
@@ -51,8 +56,12 @@ public class Manager {
     private void exitRoutineFail(){
         try {
             schedsock.close();
+            Registry r = LocateRegistry.getRegistry(regPort);
+            r.unbind(bindingName);
             //TODO
         } catch (IOException e) {
+            if(DEBUG){e.printStackTrace();}
+        } catch (NotBoundException e) {
             if(DEBUG){e.printStackTrace();}
         }
     }
@@ -94,8 +103,6 @@ public class Manager {
     private void readProperties() throws FileNotFoundException{
         readRegistry();
         readUsers(true);
-        //Users.put("test", new User("test", "test", 300));
-        //Users.put("testa", new Admin("testa", "testa"));
     }
     
     private void readRegistry() throws FileNotFoundException{
