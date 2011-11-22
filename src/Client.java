@@ -224,17 +224,25 @@ public class Client implements Callbackable{
         }
     }
     
+    private boolean loggedIn(){
+        if(comp == null && admin == null){System.out.println("Your not logged in!"); return false;}
+        return true;
+    }
+    private boolean admin(){
+        if(comp == null){return true;}
+        return false;
+    }
     
     private void getOut(int parseInt) throws RemoteException {
-        if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         comp.getOutputOf(parseInt);
     }
 
 
     private void buyC(int parseInt) throws RemoteException {
-        if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!");return;}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         if(comp.buyCredits(parseInt)){
             System.out.println("You have bought "+parseInt+" Credits. Your balance now is: " +comp.getCredits());
         }
@@ -242,21 +250,23 @@ public class Client implements Callbackable{
 
 
     private void credits() throws RemoteException {
-        if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!"); return;}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         System.out.println("You have: "+comp.getCredits());
         
     }
 
 
     private void setPstep(int i, double j) throws RemoteException {
-        if(admin == null){System.out.println("Your not an Admin!");return;}
+        if(!loggedIn()){return;}
+        if(!admin()){System.out.println("Your not an Admin!"); return;}
         admin.setPrice(i,j);
     }
 
 
     private void getPcurve() throws RemoteException {
-        if(admin == null){System.out.println("Your not an Admin!");return;}
+        if(!loggedIn()){return;}
+        if(!admin()){System.out.println("Your not an Admin!"); return;}
         admin.getPrices();        
     }
 
@@ -316,8 +326,8 @@ public class Client implements Callbackable{
      * Postconditions: new task with unique taskid prepared
      */
     private void prepare(String task, String type) throws IOException{
-        if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         TASKTYPE typ = null;
         if(type.contentEquals("LOW")){
             typ = TASKTYPE.LOW;
@@ -359,7 +369,8 @@ public class Client implements Callbackable{
      * Postconditions: task starts executing
      */
     private void executeTask(int id, String script) throws RemoteException{
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         comp.executeTask(id, script);
     }
     
@@ -372,7 +383,8 @@ public class Client implements Callbackable{
      * Postconditions: printed all files in task directory to stdout
      */
     private void list(){
-        if(admin != null){System.out.println("Your not a Company!");return;}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         String cont[] = tdir.list();
         int i = 0;
         while(i < cont.length){
@@ -386,8 +398,8 @@ public class Client implements Callbackable{
      * Postconditions: Task info printed to std out
      */
     private void info(int id) throws RemoteException{
-        if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(!loggedIn()){return;}
+        if(admin()){System.out.println("Your not a Company!"); return;}
         comp.getTaskInfo(id);
         
     }
@@ -404,7 +416,9 @@ public class Client implements Callbackable{
             if(DEBUG){e1.printStackTrace();}
         }
         e.shutdownNow();
-//TODO no clean exit
+        cb = null;
+        
+        //TODO no clean exit
     }
 
     //  Nested Classes and Main
