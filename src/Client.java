@@ -96,6 +96,15 @@ public class Client implements Callbackable{
         System.out.println(msg);
     }
     
+    public void forceLogout(){
+        System.out.println("Received force loggout from Manager. Likely he went down hard.");
+        try {
+            logout();
+        } catch (RemoteException e) {
+            if(DEBUG){e.printStackTrace();}
+        }
+    }
+    
     
     /*
      * Preconditions: none

@@ -44,6 +44,11 @@ public class Manager {
             schedsock.close();
             Registry r = LocateRegistry.getRegistry(regPort);
             r.unbind(bindingName);
+            //logout all users
+            Enumeration<User> u = Users.elements();
+            while(u.hasMoreElements()){
+                u.nextElement().callback.forceLogout();
+            }
             //TODO
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
@@ -57,6 +62,11 @@ public class Manager {
             schedsock.close();
             Registry r = LocateRegistry.getRegistry(regPort);
             r.unbind(bindingName);
+            //logout all users
+            Enumeration<User> u = Users.elements();
+            while(u.hasMoreElements()){
+                u.nextElement().callback.forceLogout();
+            }
             //TODO
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
