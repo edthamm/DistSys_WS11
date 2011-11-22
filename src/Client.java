@@ -13,7 +13,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -235,7 +234,7 @@ public class Client implements Callbackable{
 
     private void buyC(int parseInt) throws RemoteException {
         if(comp == null && admin == null){System.out.println("Your not logged in!");}
-        if(comp == null){System.out.println("Your not a Company!");}
+        if(comp == null){System.out.println("Your not a Company!");return;}
         if(comp.buyCredits(parseInt)){
             System.out.println("You have bought "+parseInt+" Credits. Your balance now is: " +comp.getCredits());
         }
@@ -251,20 +250,14 @@ public class Client implements Callbackable{
 
 
     private void setPstep(int i, double j) throws RemoteException {
-        if(admin == null){System.out.println("Your not an Admin!");}
+        if(admin == null){System.out.println("Your not an Admin!");return;}
         admin.setPrice(i,j);
     }
 
 
     private void getPcurve() throws RemoteException {
-        if(admin == null){System.out.println("Your not an Admin!");}
-        Set<Map.Entry<Integer,Double>> ps = admin.getPrices();
-        System.out.println("Task count | Discount");
-        for(Map.Entry<Integer,Double> e : ps){
-            System.out.println(e.getKey()+" | "+e.getValue() +"%");
-            
-        }
-        
+        if(admin == null){System.out.println("Your not an Admin!");return;}
+        admin.getPrices();        
     }
 
     

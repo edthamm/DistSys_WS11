@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 
 
 public interface Adminable extends Remote, Comunicatable {
-    Set<Entry<Integer, Double>> getPrices() throws RemoteException;
+    void getPrices() throws RemoteException;
     void setPrice(int step, double discount) throws RemoteException;
     void logout() throws RemoteException;
 }

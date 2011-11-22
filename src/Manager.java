@@ -228,7 +228,7 @@ public class Manager {
                         int i = 1;
                         while(u.hasMoreElements()){
                             User a = u.nextElement();
-                            System.out.println(i + a.toString());
+                            System.out.println(i +". "+ a.toString());
                             i++;
                         }
                        

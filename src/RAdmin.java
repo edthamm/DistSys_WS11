@@ -1,4 +1,5 @@
 import java.rmi.RemoteException;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,8 +16,15 @@ import java.util.concurrent.ConcurrentHashMap;
             Prices = p;
         }
 
-        public Set<Entry<Integer, Double>> getPrices() throws RemoteException {
-            return Prices.entrySet();
+        public void getPrices() throws RemoteException {
+            Callbackable cb = Users.get(name).callback;
+            Set<Entry<Integer, Double>> es = Prices.entrySet();
+            Iterator<Entry<Integer, Double>> i = es.iterator();
+            cb.sendMessage("Tasks=Percent");
+            while(i.hasNext()){
+                cb.sendMessage(i.next().toString());
+            }
+            return;
         }
 
         public void logout() throws RemoteException {
