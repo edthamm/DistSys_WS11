@@ -273,7 +273,7 @@ public class Manager {
                     if(u instanceof Admin){
                         return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
-                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,Users,Tasks, Prices, schedin, schedout), 0);
+                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout), 0);
                     return retval;
                 }
             }

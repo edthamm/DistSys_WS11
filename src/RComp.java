@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 public class RComp implements Companyable{
         private String name ="";
         private Callbackable cb = null;
-        private ConcurrentHashMap<String,User> Users;
+        private User me;
         private ConcurrentHashMap<Integer,MTask> Tasks;
         private ExecutorService TaskEServ = Executors.newCachedThreadPool();
         private ConcurrentHashMap<Integer,Double> Prices;
@@ -22,22 +22,23 @@ public class RComp implements Companyable{
         private PrintWriter schedout;
         private static final boolean DEBUG = true;
         
-        public RComp(String n, ConcurrentHashMap<String,User> u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o){
+        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o){
             name = n;
-            Users = u;
+            me = u;
             Tasks = t;
-            cb = Users.get(name).callback;
+            cb = me.callback;
             Prices = p;
             schedin = i;
             schedout = o;
         }
 
         public boolean buyCredits(int amount) throws RemoteException {
-            Users.get(name).setCredits(Users.get(name).getCredits() + amount);
+            me.setCredits(me.getCredits() + amount);
             return true;
         }
-
+        
         public void executeTask(int id, String execln) throws RemoteException {
+            //TODO
             MTask t = Tasks.get(Integer.valueOf(id));
             if(t == null){
                 cb.sendMessage("No Task with id: "+id+" known.");
@@ -45,16 +46,17 @@ public class RComp implements Companyable{
             }
             if(t.owner.contentEquals(name)){
                 t.execln = execln;
-                TaskEServ.execute(new TaskExecutor(t, cb));
+                TaskEServ.execute(new TaskExecutor(t, cb, me));
             }
                 return;
         }
 
         public int getCredits() throws RemoteException {
-            return Users.get(name).getCredits();
+            return me.getCredits();
         }
 
         public void getOutputOf(int id) throws RemoteException {
+            //TODO
             if(Tasks.containsKey(id)){
                 MTask T = Tasks.get(id);
                 if(T.owner.contentEquals(name)){
@@ -71,6 +73,7 @@ public class RComp implements Companyable{
         }
 
         public void getTaskInfo(int id) throws RemoteException {
+            //TODO
             if(Tasks.containsKey(id)){
                 MTask t = Tasks.get(id);
                 if(t.owner.contentEquals(name)){
@@ -94,7 +97,7 @@ public class RComp implements Companyable{
         public void logout() throws RemoteException {
             Callbackable c = cb;
             c.sendMessage("Logging out...");
-            Users.get(name).callback = null;
+            me.callback = null;
             c.sendMessage("done");
             
         }
@@ -104,19 +107,48 @@ public class RComp implements Companyable{
             mt.status = TASKSTATE.prepared;
             mt.owner = name;
             Tasks.put(Integer.valueOf(mt.id), mt);
+            if(t.ttype == TASKTYPE.HIGH){
+                me.high++;
+            }
+            if(t.ttype == TASKTYPE.MIDDLE){
+                me.middle++;
+            }
+            if(t.ttype == TASKTYPE.LOW){
+                me.low++;
+            }
+            double d = getDiscount();
+            me.setCredits(Double.valueOf(me.getCredits()-(10*(100-d/100))).intValue());//TODO check if this rounding is any good
             cb.sendMessage("Task prepared with id: "+ mt.id);
-            //TODO accounting taskstypes
             return true;
         }
         
 
+        private double getDiscount() {
+            //TODO check this
+            int total = me.totalTasks();
+            Integer max = 0;
+            double discount = 0;
+            Enumeration<Integer> k = Prices.keys();
+            while (k.hasMoreElements()){
+                Integer s = k.nextElement();
+                int t = s.intValue();
+                if(total > t && s > max){
+                    discount = Prices.get(s);                   
+                }
+            }
+            return discount;
+        }
+
+
         private class TaskExecutor implements Runnable{
                 MTask m;
                 Callbackable cb;
+                User me;
                 
-                public TaskExecutor(MTask mt, Callbackable c){
+                public TaskExecutor(MTask mt, Callbackable c, User u){
                     m = mt;
                     cb = c;
+                    me = u;
 
                 }
 
@@ -209,7 +241,7 @@ public class RComp implements Companyable{
                         
                         long time = m.finish-m.start;
                         int cost = calcCost(time);
-                        Users.get(m.owner).setCredits(Users.get(m.owner).getCredits() - cost);
+                        me.setCredits(me.getCredits() - cost);
                         
                         tout.close();
                         dout.close();
@@ -224,8 +256,7 @@ public class RComp implements Companyable{
                 }
 
                 private int calcCost(long time) {
-                    User u = Users.get(m.owner);
-                    int total = u.high+u.middle+u.low;
+                    int total = me.totalTasks();
                     Integer max = 0;
                     int price;
                     double discount = 0;

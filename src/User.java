@@ -31,6 +31,11 @@ public class User {
             }
             return false;
         }
+        
+        public int totalTasks(){
+            return high+middle+low;
+        }
+        
         public synchronized void setCredits(int credits) {
             this.credits = credits;
         }
