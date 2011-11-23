@@ -117,14 +117,13 @@ public class RComp implements Companyable{
                 me.low++;
             }
             double d = getDiscount();
-            me.setCredits(Double.valueOf(me.getCredits()-(10*(100-d/100))).intValue());//TODO check if this rounding is any good
+            me.setCredits(Double.valueOf(me.getCredits()-(10*(100-d)/100)).intValue());//TODO check if this rounding is any good
             cb.sendMessage("Task prepared with id: "+ mt.id);
             return true;
         }
         
 
         private double getDiscount() {
-            //TODO check this
             int total = me.totalTasks();
             Integer max = 0;
             double discount = 0;
@@ -132,8 +131,9 @@ public class RComp implements Companyable{
             while (k.hasMoreElements()){
                 Integer s = k.nextElement();
                 int t = s.intValue();
-                if(total > t && s > max){
-                    discount = Prices.get(s);                   
+                if(total >= t && s > max){
+                    discount = Prices.get(s);
+                    max = s;
                 }
             }
             return discount;

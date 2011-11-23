@@ -47,7 +47,10 @@ public class Manager {
             //logout all users
             Enumeration<User> u = Users.elements();
             while(u.hasMoreElements()){
-                u.nextElement().callback.forceLogout();
+                User i = u.nextElement();
+                if(i.callback != null){
+                    i.callback.forceLogout();
+                }
             }
             //TODO
         } catch (IOException e) {
@@ -65,7 +68,10 @@ public class Manager {
             //logout all users
             Enumeration<User> u = Users.elements();
             while(u.hasMoreElements()){
-                u.nextElement().callback.forceLogout();
+                User i = u.nextElement();
+                if(i.callback != null){
+                    i.callback.forceLogout();
+                }
             }
             //TODO
         } catch (IOException e) {
