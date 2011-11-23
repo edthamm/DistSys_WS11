@@ -1,4 +1,5 @@
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
             User me = Users.get(name);
             me.callback.sendMessage("Thanks for using our services. Bye.");
             me.callback = null;
+            UnicastRemoteObject.unexportObject(this, true);
             
         }
 

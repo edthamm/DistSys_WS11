@@ -8,6 +8,7 @@
  */
 
 import java.io.*;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -417,15 +418,18 @@ public class Client implements Callbackable{
      * Preconditions: none
      * Postconditions: all open handles are released, program terminates
      */
-    private void exit() {
+    private void exit(){
         System.out.print("Exiting on request. Good Bye!\n");
         try {
-            logout();
+            if(loggedIn()){
+                logout();
+            }
+            UnicastRemoteObject.unexportObject(this, true);
         } catch (RemoteException e1) {
             if(DEBUG){e1.printStackTrace();}
         }
         e.shutdownNow();
-        cb = null;
+        
         
         //TODO no clean exit
     }

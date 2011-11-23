@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -73,7 +74,6 @@ public class RComp implements Companyable{
         }
 
         public void getTaskInfo(int id) throws RemoteException {
-            //TODO
             if(Tasks.containsKey(id)){
                 MTask t = Tasks.get(id);
                 if(t.owner.contentEquals(name)){
@@ -99,6 +99,7 @@ public class RComp implements Companyable{
             c.sendMessage("Logging out...");
             me.callback = null;
             c.sendMessage("done");
+            UnicastRemoteObject.unexportObject(this, true);
             
         }
 
