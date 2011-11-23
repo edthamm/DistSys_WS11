@@ -53,8 +53,6 @@ public class Manager {
                 }
             }
             UnicastRemoteObject.unexportObject(LHandler, true);
-            //TODO
-            //maybe unexport all RComp,RAdmin
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
         } catch (NotBoundException e) {
@@ -76,7 +74,6 @@ public class Manager {
                 }
             }
             UnicastRemoteObject.unexportObject(LHandler, true);
-            //TODO
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
         } catch (NotBoundException e) {

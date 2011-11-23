@@ -49,6 +49,9 @@ public class RComp implements Companyable{
                 t.execln = execln;
                 TaskEServ.execute(new TaskExecutor(t, cb, me));
             }
+            else{
+                cb.sendMessage("This Task does not belong to you.");
+            }
                 return;
         }
 
@@ -155,16 +158,28 @@ public class RComp implements Companyable{
 
                 public void run() {
                     try{
-                    
-                    schedout.println("!requestEngine "+m.id+" "+m.ttype.toString());
-                    
-                    String rcv = schedin.readLine();//TODO will i get the next or the one concerning me?
-                    //TODO assign fail and win
+
+                        schedout.println("!requestEngine "+m.id+" "+m.ttype.toString());
+
+
+                        String rcv = schedin.readLine();//TODO make sched calls exclusive
+                        if(rcv.contains("Assigned engine:")){
+                            String rs[] = rcv.split(" ");
+                            System.out.print(rs[6]+"\n");
+                            m.port = Integer.parseInt(rs[3]);
+                            m.taskEngine = rs[2];
+                            m.status = TASKSTATE.assigned;
+                            System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[3]+"\n");
+                        }                        
+                        else{
+                            cb.sendMessage(rcv); //do not do this in production never hand down unmasked errors.
+                            return;
+                        }
                     }
                     catch(IOException e){
                         if(DEBUG){e.printStackTrace();}
                     }
-                    
+
                     
                     //Start talking to GTE
                     Socket tsock = null;
@@ -184,6 +199,7 @@ public class RComp implements Companyable{
                     } catch (IOException e) {
                         System.out.print("Sorry encounterd a problem in opening the outgoing Task Engine socket.\n");
                         if(DEBUG){e.printStackTrace();}
+                        return;
                     }
                     
                     try {
@@ -193,6 +209,7 @@ public class RComp implements Companyable{
                         if(DEBUG){e.printStackTrace();}
                         return;
                     }
+                    //TODO error msges to client
                 
                     //Transmit the command string string.
                     //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
@@ -229,7 +246,7 @@ public class RComp implements Companyable{
                         }
                         else{
                             m.status = TASKSTATE.prepared;
-                            cb.sendMessage("Currently no engine available, try again later.");
+                            cb.sendMessage("Engine currently not available, try again later.");
                             return;
                         }
 
@@ -265,8 +282,9 @@ public class RComp implements Companyable{
                     while (k.hasMoreElements()){
                         Integer s = k.nextElement();
                         int t = s.intValue();
-                        if(total > t && s > max){ //falls die anzahl der gesamtauftr�ge h�her ist als diese stufe, und keine h�here stufe vorher angetroffen wurde
-                            discount = Prices.get(s);                   
+                        if(total > t && s > max){
+                            discount = Prices.get(s);
+                            max = s;
                         }
                     }
                     
@@ -275,8 +293,6 @@ public class RComp implements Companyable{
                     
                     return price;
                 }
-                
-                
                 
         }
 
