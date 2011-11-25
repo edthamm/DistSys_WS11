@@ -7,6 +7,7 @@
  *  It also manages company data for accounting and billing purposes. 
  * This program was not written with security in mind 
  * !!!DO NOT USE IN PRODUCTIVE ENVIROMENT!!!
+ * THERE IS NO LOGIN CHECK ANY MORE
  */
 
 
@@ -180,9 +181,7 @@ public class Scheduler extends AbstractServer {
     
 
     // Client handling is done in worker.
-    
-
-    //TODO implement some sort of ticketing for requestEngine
+   
     private class Worker extends AbstractServer.Worker{
         public Worker(Socket s) {
             super(s);

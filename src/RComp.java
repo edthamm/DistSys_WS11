@@ -273,15 +273,17 @@ public class RComp implements Companyable{
                         }
 
                         while((in = tin.readLine())!= null){
-                            m.output.concat(in);
+                            m.output = m.output.concat(in);
                         }
                         m.status = TASKSTATE.finished;
                         m.finish = System.currentTimeMillis();
                         cb.sendMessage("Execution of Task "+m.id+" finished.");
                         
-                        long time = m.finish-m.start;
+                        long time = m.finish-m.start; //TODO this is terribly wrong
+                        System.out.print(time);
                         int cost = calcCost(time);
                         me.setCredits(me.getCredits() - cost);
+                        m.cost = String.valueOf((Integer.parseInt(m.cost)+cost));
                         
                         tout.close();
                         dout.close();
