@@ -68,7 +68,6 @@ public class RComp implements Companyable{
         }
 
         public void getOutputOf(int id) throws RemoteException {
-            //TODO
             if(Tasks.containsKey(id)){
                 MTask T = Tasks.get(id);
                 if(T.owner.contentEquals(name)){
@@ -273,15 +272,15 @@ public class RComp implements Companyable{
                         }
 
                         while((in = tin.readLine())!= null){
-                            m.output = m.output.concat(in);
+                            m.output = m.output.concat(in)+"\n";
                         }
                         m.status = TASKSTATE.finished;
                         m.finish = System.currentTimeMillis();
                         cb.sendMessage("Execution of Task "+m.id+" finished.");
                         
                         long time = m.finish-m.start; //TODO this is terribly wrong
-                        System.out.print(time);
-                        int cost = calcCost(time);
+                        float timeinmin = time/(60*1000F);
+                        int cost = calcCost(timeinmin);
                         me.setCredits(me.getCredits() - cost);
                         m.cost = String.valueOf((Integer.parseInt(m.cost)+cost));
                         
@@ -297,7 +296,7 @@ public class RComp implements Companyable{
 
                 }
 
-                private int calcCost(long time) {
+                private int calcCost(float time) {
                     int total = me.totalTasks();
                     Integer max = 0;
                     int price;

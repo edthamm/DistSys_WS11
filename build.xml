@@ -23,7 +23,7 @@
 	</target>
 	
 	<target name="run-manager" depends="compile" description="Run Manager.">
-		<java classname="your.ManagementComponent" fork="true" classpathref=".classpath">
+		<java classname="Manager" fork="true" classpathref=".classpath">
 			<arg value="RMI_dir"/><!-- bindingName -->
 			<arg value="localhost"/><!-- schedulerHost -->
 			<arg value="12370"/><!--schedulerTCPPort -->
