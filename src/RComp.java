@@ -16,6 +16,7 @@ public class RComp implements Companyable{
         private String name ="";
         private Callbackable cb = null;
         private User me;
+        private int pcost;
         private ConcurrentHashMap<Integer,MTask> Tasks;
         private ExecutorService TaskEServ = Executors.newCachedThreadPool();
         private ConcurrentHashMap<Integer,Double> Prices;
@@ -24,7 +25,7 @@ public class RComp implements Companyable{
         private static final boolean DEBUG = true;
         private Manager Manager;
         
-        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m){
+        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m, int pc){
             name = n;
             me = u;
             Tasks = t;
@@ -33,6 +34,7 @@ public class RComp implements Companyable{
             schedin = i;
             schedout = o;
             Manager = m;
+            pcost = pc;
         }
 
         public boolean buyCredits(int amount) throws RemoteException {
@@ -132,7 +134,7 @@ public class RComp implements Companyable{
                 me.low++;
             }
             double d = getDiscount();
-            int costs = Double.valueOf((10*(100-d)/100)).intValue();
+            int costs = Double.valueOf((pcost*(100-d)/100)).intValue();
             int newcreds = me.getCredits()-costs;//TODO check if this rounding is any good
             me.setCredits(newcreds);
             mt.cost = String.valueOf(costs);

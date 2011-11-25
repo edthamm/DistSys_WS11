@@ -14,11 +14,12 @@ import java.util.concurrent.*;
 public class Manager {
     private static final boolean DEBUG = true;
     private static final boolean LAB = true;
-    private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort";
+    private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort preparationCost [taskDir]";
     private String bindingName;
     private String schedHost;
     private int schedTP;
     private int regPort;
+    private int prepcosts;
     private Socket schedsock;
     private PrintWriter schedout;
     private BufferedReader schedin;
@@ -29,10 +30,11 @@ public class Manager {
     public Semaphore RequestMutex = new Semaphore(1);
 
     
-    public Manager(String bn, String sh, int tp){
+    public Manager(String bn, String sh, int tp, int p){
         bindingName = bn;
         schedHost = sh;
         schedTP = tp;
+        prepcosts = p;
     }
     
     public void inputListen(){
@@ -206,13 +208,13 @@ public class Manager {
     }
 
     public static void main(String[] args) {
-        if(args.length != 3){
+        if(args.length < 4 || args.length > 5){
             System.out.print(usage);
             System.exit(1);
         }
         
         try {
-            Manager m = new Manager(args[0], args[1], Integer.parseInt(args[2]));
+            Manager m = new Manager(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]));
             
             m.readProperties();
             m.inputListen();
@@ -286,7 +288,7 @@ public class Manager {
                     if(u instanceof Admin){
                         return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
-                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m), 0);
+                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m, prepcosts), 0);
                     return retval;
                 }
             }
