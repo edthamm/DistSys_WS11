@@ -38,6 +38,7 @@ public class RComp implements Companyable{
         }
 
         public boolean buyCredits(int amount) throws RemoteException {
+            //TODO amount <0
             me.setCredits(me.getCredits() + amount);
             return true;
         }
@@ -120,6 +121,7 @@ public class RComp implements Companyable{
         }
 
         public boolean prepareTask(Task t) throws RemoteException {
+            //TODO check for sufficient funds before prep -> throw
             MTask mt = new MTask(t);
             mt.status = TASKSTATE.prepared;
             mt.owner = name;

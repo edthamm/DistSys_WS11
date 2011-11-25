@@ -37,6 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
         }
 
         public void setPrice(int step, double discount) throws RemoteException {
+            
+            //TODO values in range? step >0; 0<= discount <= 100
             if(Prices.containsKey(Integer.valueOf(step))){
                 Prices.replace(Integer.valueOf(step), Double.valueOf(discount));
             }

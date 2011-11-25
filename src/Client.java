@@ -148,11 +148,12 @@ public class Client implements Callbackable{
                 return false;
             }
             Comunicatable b = login(in[1],in[2]);
-            if(b instanceof Adminable){
-                admin = (Adminable) b;
-            }
-            else{
-                comp = (Companyable) b;
+            if (b != null) {//TODO see if this will give me trouble
+                if (b instanceof Adminable) {
+                    admin = (Adminable) b;
+                } else {
+                    comp = (Companyable) b;
+                }
             }
             return false; 
         }
@@ -292,7 +293,7 @@ public class Client implements Callbackable{
         }
         
         try {
-            if(admin != null || comp != null){System.out.println("Already logged in.");}
+            if(admin != null || comp != null){System.out.println("Already logged in."); return null;}
             Registry r = LocateRegistry.getRegistry(mancomp, port);
             Loginable l = (Loginable) r.lookup(sname);
             return l.login(user, pass, cb);
@@ -428,9 +429,6 @@ public class Client implements Callbackable{
             if(DEBUG){e1.printStackTrace();}
         }
         e.shutdownNow();
-        
-        
-        //TODO no clean exit
     }
 
     //  Nested Classes and Main
