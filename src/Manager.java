@@ -25,7 +25,8 @@ public class Manager {
     private ConcurrentHashMap<String,User> Users = new ConcurrentHashMap<String,User>();
     private ConcurrentHashMap<Integer,Double> Prices = new ConcurrentHashMap<Integer,Double>();
     private ConcurrentHashMap<Integer,MTask> Tasks = new ConcurrentHashMap<Integer,MTask>();
-    private LoginHandler LHandler = new LoginHandler();
+    private LoginHandler LHandler = new LoginHandler(this);
+    public Semaphore RequestMutex = new Semaphore(1);
 
     
     public Manager(String bn, String sh, int tp){
@@ -268,6 +269,12 @@ public class Manager {
     }
     
     private class LoginHandler implements Loginable{
+        
+        private Manager m = null;
+        
+        public LoginHandler(Manager m){
+            this.m = m;
+        }
 
         public Comunicatable login(String uname, String password, Callbackable cb)
                 throws RemoteException {
@@ -279,7 +286,7 @@ public class Manager {
                     if(u instanceof Admin){
                         return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
-                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout), 0);
+                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m), 0);
                     return retval;
                 }
             }

@@ -22,8 +22,9 @@ public class RComp implements Companyable{
         private BufferedReader schedin;
         private PrintWriter schedout;
         private static final boolean DEBUG = true;
+        private Manager Manager;
         
-        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o){
+        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m){
             name = n;
             me = u;
             Tasks = t;
@@ -31,6 +32,7 @@ public class RComp implements Companyable{
             Prices = p;
             schedin = i;
             schedout = o;
+            Manager = m;
         }
 
         public boolean buyCredits(int amount) throws RemoteException {
@@ -47,6 +49,12 @@ public class RComp implements Companyable{
             }
             if(t.owner.contentEquals(name)){
                 t.execln = execln;
+                try {
+                    Manager.RequestMutex.acquire();
+                } catch (InterruptedException e) {
+                    if(DEBUG){e.printStackTrace();}
+                    //TODO should i return here???
+                }
                 TaskEServ.execute(new TaskExecutor(t, cb, me));
             }
             else{
@@ -64,6 +72,10 @@ public class RComp implements Companyable{
             if(Tasks.containsKey(id)){
                 MTask T = Tasks.get(id);
                 if(T.owner.contentEquals(name)){
+                    if(me.getCredits() < 0){
+                        cb.sendMessage("Not enough credits to pay for execution. Please buy credits.");
+                        return;
+                    }
                     cb.sendMessage(T.output);
                     return;
                 }
@@ -121,7 +133,10 @@ public class RComp implements Companyable{
                 me.low++;
             }
             double d = getDiscount();
-            me.setCredits(Double.valueOf(me.getCredits()-(10*(100-d)/100)).intValue());//TODO check if this rounding is any good
+            int costs = Double.valueOf((10*(100-d)/100)).intValue();
+            int newcreds = me.getCredits()-costs;//TODO check if this rounding is any good
+            me.setCredits(newcreds);
+            mt.cost = String.valueOf(costs);
             cb.sendMessage("Task prepared with id: "+ mt.id);
             return true;
         }
@@ -173,6 +188,7 @@ public class RComp implements Companyable{
                         }                        
                         else{
                             cb.sendMessage(rcv); //do not do this in production never hand down unmasked errors.
+                            Manager.RequestMutex.release(); //else this will block for ever
                             return;
                         }
                     }
@@ -195,10 +211,12 @@ public class RComp implements Companyable{
                     } catch (UnknownHostException e) {
                         System.out.print("The Host Task Engine "+m.taskEngine+" is unknown. Can not connect.\n");
                         if(DEBUG){e.printStackTrace();}
+                        Manager.RequestMutex.release();
                         return;
                     } catch (IOException e) {
                         System.out.print("Sorry encounterd a problem in opening the outgoing Task Engine socket.\n");
                         if(DEBUG){e.printStackTrace();}
+                        Manager.RequestMutex.release();
                         return;
                     }
                     
@@ -207,6 +225,7 @@ public class RComp implements Companyable{
                     } catch (IOException e) {
                         System.out.print("Could not listen for replay from Task Engine.\n");
                         if(DEBUG){e.printStackTrace();}
+                        Manager.RequestMutex.release();
                         return;
                     }
                     //TODO error msges to client
@@ -234,6 +253,7 @@ public class RComp implements Companyable{
                         catch (IOException e) {
                         System.out.print("There was a problem with the remote connection, could not send file.\n");
                         if(DEBUG){e.printStackTrace();}
+                        Manager.RequestMutex.release();
                         return;
                     }
                         
@@ -243,6 +263,8 @@ public class RComp implements Companyable{
                         if((in = tin.readLine()).contains("execution started")){
                             m.status = TASKSTATE.executing;
                             m.start = System.currentTimeMillis();
+                            Manager.RequestMutex.release();
+                            //TODO is this really the desired behavior???
                         }
                         else{
                             m.status = TASKSTATE.prepared;
