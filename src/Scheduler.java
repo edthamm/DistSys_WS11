@@ -13,7 +13,6 @@
 import java.io.*;
 import java.net.*;
 import java.util.Enumeration;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
@@ -32,7 +31,6 @@ public class Scheduler extends AbstractServer {
     private DatagramSocket uSock = null;
     private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
     private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();
-    private ConcurrentHashMap<String,Company> Companies = new ConcurrentHashMap<String,Company>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     private static final boolean DEBUG = false;
@@ -62,33 +60,6 @@ public class Scheduler extends AbstractServer {
         
     }
     
-    public void readCompanies() throws FileNotFoundException{
-        InputStream in = null;
-        in = ClassLoader.getSystemResourceAsStream("company.properties");
-        if(in != null){
-            java.util.Properties companies = new java.util.Properties();
-            try {
-                companies.load(in);
-                Set<String> companyNames = companies.stringPropertyNames();
-                
-                for (String companyName : companyNames){
-                    String password = companies.getProperty(companyName);
-                    Company c = new Company();
-                    c.name = companyName;
-                    c.password = password;
-                    Companies.put(c.name, c);
-                }
-                
-            } catch (IOException e) {
-                System.out.print("Could not read from company.properties. Exiting.\n");
-                exitRoutineFail();
-                if(DEBUG){e.printStackTrace();}
-            }
-        }
-        else{
-            throw new FileNotFoundException();
-        }
-    }
     
     private GTEntry schedule(String t){//String is load.
         int load = 0;
@@ -153,25 +124,11 @@ public class Scheduler extends AbstractServer {
     }
     
     
-    public boolean loggedIn(String ip){
-        Enumeration<Company> ce = Companies.elements();
-        while(ce.hasMoreElements()){
-        	Company c = ce.nextElement();
-            if(c.via.contains(ip) && c.line == COMPANYCONNECT.online){
-                return true;
-            }
-        }
-        return false;
-        //client dies will be trouble already asked
-    }
-    
-    
     public void exitRoutine(){
         contE.shutdownNow();
         if(uSock != null){uSock.close();}
         etime.cancel();
         cancelGETimer();
-        logoutCompanies();
         super.exitRoutine();
     }
     
@@ -179,7 +136,6 @@ public class Scheduler extends AbstractServer {
         contE.shutdownNow();
         if(uSock != null){uSock.close();}
         etime.cancel();
-        logoutCompanies();
         super.exitRoutineFail();
     }
     
@@ -193,24 +149,6 @@ public class Scheduler extends AbstractServer {
         }
     }
     
-    private void logoutCompanies(){
-        Enumeration<Company> ce = Companies.elements();
-        while(ce.hasMoreElements()){
-            Company c = ce.nextElement();
-            if(c.line == COMPANYCONNECT.online){
-                c.line = COMPANYCONNECT.offline;
-            }
-        }
-        for(Socket s : CSocks){
-            try {
-                s.close();
-            } catch (IOException e) {
-                if(DEBUG){e.printStackTrace();}
-            }
-        }
-    }
-
-    
     public static void main(String[] args) {
         
         if(args.length != 6){
@@ -221,7 +159,6 @@ public class Scheduler extends AbstractServer {
         try {
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
             
-            sched.readCompanies();
             sched.inputListen();
             sched.control();
             sched.tcpListen();
@@ -277,64 +214,17 @@ public class Scheduler extends AbstractServer {
  */
         private String processInput(String input, String ip) {
             String[] in = input.split(" ");
-            //what if client dies set a timeout? answer bad luck have to wait for shed reboot
-            if(!in[0].contains("!login") && !loggedIn(ip)){
-                return "Please log in first.";
-            }
-
 
             if(in[0].contentEquals("!requestEngine")){
                 GTEntry g = schedule(in[2]);
                 if(g == null){
                     return "Not enough capacity. Try again later.";
                 }
-                Enumeration<Company> ce = Companies.elements();
-                while(ce.hasMoreElements()){
-                	Company c = ce.nextElement();
-                    if(c.via.contentEquals(ip)){
-                        if(in[2].contains("HIGH")){
-                            c.high++;
-                        }
-                        if(in[2].contains("MIDDLE")){
-                            c.middle++;
-                        }
-                        if(in[2].contains("LOW")){
-                            c.low++;
-                        }
-                    }
-                }
                 return "Assigned engine: "+g.ip+" "+g.tcp+" to task "+in[1];
                 
                 
             }
-            if(in[0].contentEquals("!login")){
-                Enumeration<Company> ce = Companies.elements();
-                while(ce.hasMoreElements()){
-                	Company c = ce.nextElement();
-                    if(in[1].contentEquals(c.name) && in[2].contentEquals(c.password) && c.line != COMPANYCONNECT.online){
-                        c.via = ip;
-                        c.line = COMPANYCONNECT.online;
-                        return "Successfully logged in.";
-                    }  
-                }
-                return"Wrong company or password.";
-                
-            }
-            if(in[0].contentEquals("!logout")){
-                Enumeration<Company> ce = Companies.elements();
-                while(ce.hasMoreElements()){
-                	Company c = ce.nextElement();
-                    if(c.via.contains(ip)){
-                        c.line = COMPANYCONNECT.offline;
-                        c.via = null;
-                        break;
-                    }
-                }
-                return "Successfully logged out.";   
-            }
-            
-            
-            return "Unrecognised message send !login,!logout, or !requestEngine."; //would not do this in production gives away to much info.
+            return "Unrecognised message send !requestEngine."; //would not do this in production gives away to much info.
         }
         
     }
@@ -501,17 +391,6 @@ public class Scheduler extends AbstractServer {
                         }                    
                         userin = "";
                     }
-                    if(userin.contentEquals("!companies")){
-                        int i = 1;
-                        Enumeration<Company> ce = Companies.elements();
-                        while(ce.hasMoreElements()){
-                        	Company c = ce.nextElement();
-                            System.out.print(i+". "+c.toString());
-                            i++;
-                        }
-                        userin = "";
-                        
-                    }
                     if(userin.contentEquals("!exit")){
                         System.out.println("Exiting on request. Bye.");
                         exitRoutine();
@@ -599,25 +478,13 @@ public class Scheduler extends AbstractServer {
                 	return;
                 }
                 else{
-                	g.setStatus(GTSTATUS.offline);
+                    if(g.getStatus() != GTSTATUS.suspended){
+                        g.setStatus(GTSTATUS.offline);
+                    }
                 }
                 return;
             }
             
-        }
-    }
-    
-    private class Company{
-        private String via = "";
-        private String name = "";
-        private String password = ""; //this is inherently unsafe in production use encryption
-        private COMPANYCONNECT line = COMPANYCONNECT.offline;
-        private int low = 0;
-        private int middle = 0;
-        private int high = 0;
-        
-        public String toString(){
-            return(name+" ("+line.toString()+") LOW: "+low+", MIDDLE: "+middle+", HIGH: "+high+"\n");
         }
     }
     
