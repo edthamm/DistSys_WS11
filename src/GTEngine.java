@@ -177,7 +177,6 @@ public class GTEngine extends AbstractServer {
         super.exitRoutineFail();
         return;
     }
-    //TODO logout clients
     
     private void killps(){
         for(Process p : Prs){

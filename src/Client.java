@@ -441,7 +441,7 @@ public class Client implements Callbackable{
     private void exit(){
         System.out.print("Exiting on request. Good Bye!\n");
         try {
-            if(loggedIn()){
+            if(loggedIn()){//TODO Maybe swallow output
                 logout();
             }
             UnicastRemoteObject.unexportObject(this, true);
