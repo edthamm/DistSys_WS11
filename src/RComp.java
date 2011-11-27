@@ -108,11 +108,11 @@ public class RComp implements Companyable{
                 }
                 else{
                     cb.sendMessage("This Task does not belong to you!");
-                    return;
+                    throw new RemoteException("This Task does not belong to you!");
                 }
             }
             cb.sendMessage("Sorry. Task inexistant.");
-            
+            throw new RemoteException("Sorry. Task inexistant.");
             
         }
 

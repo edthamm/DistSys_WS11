@@ -422,7 +422,11 @@ public class Client implements Callbackable{
     private void info(int id) throws RemoteException{
         if(!loggedIn()){return;}
         if(admin()){System.out.println("Your not a Company!"); return;}
-        comp.getTaskInfo(id);
+        try {
+            comp.getTaskInfo(id);
+        } catch (RemoteException e) {
+            //I choose to ignore
+        }
         
     }
     
