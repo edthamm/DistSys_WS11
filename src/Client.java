@@ -16,6 +16,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Set;
 import java.util.concurrent.*;
 
+
+//TODO check exceptions
 public class Client implements Callbackable{
     
     private String mancomp;
@@ -371,7 +373,11 @@ public class Client implements Callbackable{
         bis.read(ba,0,ba.length);
         
         Task t = new Task(task, typ, ba.length, ba);
-        comp.prepareTask(t);
+        try {
+            comp.prepareTask(t);
+        } catch (RemoteException e) {
+            System.out.println(e.getCause().getMessage());
+        }
         
     }
     
@@ -383,7 +389,11 @@ public class Client implements Callbackable{
     private void executeTask(int id, String script) throws RemoteException{
         if(!loggedIn()){return;}
         if(admin()){System.out.println("Your not a Company!"); return;}
-        comp.executeTask(id, script);
+        try {
+            comp.executeTask(id, script);
+        } catch (RemoteException e) {
+            // I choose to ignore
+        }
     }
     
     

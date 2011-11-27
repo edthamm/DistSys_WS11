@@ -49,7 +49,6 @@ public class RComp implements Companyable{
         }
         
         public void executeTask(int id, String execln) throws RemoteException {
-            //TODO
             MTask t = Tasks.get(Integer.valueOf(id));
             if(t == null){
                 cb.sendMessage("No Task with id: "+id+" known.");
@@ -67,6 +66,7 @@ public class RComp implements Companyable{
             }
             else{
                 cb.sendMessage("This Task does not belong to you.");
+                throw new RemoteException("Task not yours.");
             }
                 return;
         }
@@ -125,28 +125,33 @@ public class RComp implements Companyable{
             
         }
 
-        public boolean prepareTask(Task t) throws RemoteException {
-            //TODO check for sufficient funds before prep -> throw
-            MTask mt = new MTask(t);
-            mt.status = TASKSTATE.prepared;
-            mt.owner = name;
-            Tasks.put(Integer.valueOf(mt.id), mt);
-            if(t.ttype == TASKTYPE.HIGH){
-                me.high++;
-            }
-            if(t.ttype == TASKTYPE.MIDDLE){
-                me.middle++;
-            }
-            if(t.ttype == TASKTYPE.LOW){
-                me.low++;
-            }
+        public void prepareTask(Task t) throws RemoteException {
             double d = getDiscount();
             int costs = Double.valueOf((pcost*(100-d)/100)).intValue();
-            int newcreds = me.getCredits()-costs;//TODO check if this rounding is any good
-            me.setCredits(newcreds);
-            mt.cost = String.valueOf(costs);
-            cb.sendMessage("Task prepared with id: "+ mt.id);
-            return true;
+            
+            if (me.getCredits() >= costs) {
+                MTask mt = new MTask(t);
+                mt.status = TASKSTATE.prepared;
+                mt.owner = name;
+                Tasks.put(Integer.valueOf(mt.id), mt);
+                if (t.ttype == TASKTYPE.HIGH) {
+                    me.high++;
+                }
+                if (t.ttype == TASKTYPE.MIDDLE) {
+                    me.middle++;
+                }
+                if (t.ttype == TASKTYPE.LOW) {
+                    me.low++;
+                }
+                int newcreds = me.getCredits() - costs;//TODO check if this rounding is any good
+                me.setCredits(newcreds);
+                mt.cost = String.valueOf(costs);//TODO is this really wanted
+                cb.sendMessage("Task prepared with id: " + mt.id);
+                return;
+            }
+            else{
+                throw new RemoteException("Sorry insufficient funds to prepare task.");
+            }
         }
         
 
@@ -180,30 +185,44 @@ public class RComp implements Companyable{
                 }
 
                 public void run() {
-                    try{
+                    if (m.status == TASKSTATE.prepared) {
+                        try {
 
-                        schedout.println("!requestEngine "+m.id+" "+m.ttype.toString());
+                            schedout.println("!requestEngine " + m.id + " "+ m.ttype.toString());
 
-
-                        String rcv = schedin.readLine();//TODO make sched calls exclusive
-                        if(rcv.contains("Assigned engine:")){
-                            String rs[] = rcv.split(" ");
-                            System.out.print(rs[6]+"\n");
-                            m.port = Integer.parseInt(rs[3]);
-                            m.taskEngine = rs[2];
-                            m.status = TASKSTATE.assigned;
-                            System.out.print("Assigned engine: "+rs[2]+" Port: "+rs[3]+"\n");
-                        }                        
-                        else{
-                            cb.sendMessage(rcv); //do not do this in production never hand down unmasked errors.
-                            Manager.RequestMutex.release(); //else this will block for ever
+                            String rcv = schedin.readLine();
+                            if (rcv.contains("Assigned engine:")) {
+                                String rs[] = rcv.split(" ");
+                                System.out.print(rs[6] + "\n");
+                                m.port = Integer.parseInt(rs[3]);
+                                m.taskEngine = rs[2];
+                                m.status = TASKSTATE.assigned;
+                                System.out.print("Assigned engine: " + rs[2]
+                                        + " Port: " + rs[3] + "\n");
+                            } else {
+                                System.out.println(rcv);
+                                Manager.RequestMutex.release(); //else this will block for ever
+                                throw new RemoteException(
+                                        "Sorry no engine available at the moment, please try again later.");
+                            }
+                        } catch (IOException e) {
+                            if (DEBUG) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    
+                    if(m.status != TASKSTATE.assigned){
+                        try {
+                            cb.sendMessage("Sorry something went wrong. Taskstate should be assigned but is: "+m.status.toString()
+                                           + "\nIf you are trying to resubmit an executing or finished Task be aware that a Task can be submitted only once.\n"
+                                           + "If you are encountering a different problem please contact our staff.");
+                            return;
+                        } catch (RemoteException e) {
+                            if(DEBUG){e.printStackTrace();}
                             return;
                         }
                     }
-                    catch(IOException e){
-                        if(DEBUG){e.printStackTrace();}
-                    }
-
                     
                     //Start talking to GTE
                     Socket tsock = null;
@@ -236,7 +255,6 @@ public class RComp implements Companyable{
                         Manager.RequestMutex.release();
                         return;
                     }
-                    //TODO error msges to client
                 
                     //Transmit the command string string.
                     //BEWARE THIS IS UNVALIDATE USER INPUT!!!        
@@ -272,10 +290,11 @@ public class RComp implements Companyable{
                             m.status = TASKSTATE.executing;
                             m.start = System.currentTimeMillis();
                             Manager.RequestMutex.release();
+                            cb.sendMessage("Execution of task "+m.id+" started.");
                             //TODO is this really the desired behavior???
                         }
                         else{
-                            m.status = TASKSTATE.prepared;
+                            m.status = TASKSTATE.assigned;
                             cb.sendMessage("Engine currently not available, try again later.");
                             return;
                         }
@@ -287,7 +306,7 @@ public class RComp implements Companyable{
                         m.finish = System.currentTimeMillis();
                         cb.sendMessage("Execution of Task "+m.id+" finished.");
                         
-                        long time = m.finish-m.start; //TODO this is terribly wrong
+                        long time = m.finish-m.start;
                         float timeinmin = time/(60*1000F);
                         int cost = calcCost(timeinmin);
                         me.setCredits(me.getCredits() - cost);
@@ -321,7 +340,7 @@ public class RComp implements Companyable{
                     }
                     
                     discount= discount/100;
-                    price = Double.valueOf(((10*time)-((10*time)*discount))).intValue();//TODO check espec for minute
+                    price = Double.valueOf(((10*time)-((10*time)*discount))).intValue();
                     
                     return price;
                 }
