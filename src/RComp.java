@@ -81,18 +81,24 @@ public class RComp implements Companyable{
                 if(T.owner.contentEquals(name)){
                     if(me.getCredits() < 0){
                         cb.sendMessage("Not enough credits to pay for execution. Please buy credits.");
+                        throw new RemoteException("Not enough credits to pay for execution. Please buy credits.");
+                    }                                       
+                    if (T.status == TASKSTATE.finished) {
+                        cb.sendMessage(T.output);
                         return;
                     }
-                    cb.sendMessage(T.output);
-                    return;
+                    else{
+                        cb.sendMessage("Sorry Task has not finished executing.");
+                        throw new RemoteException("Sorry Task has not finished executing.");
+                    }
                 }
                 else{
                     cb.sendMessage("This Task does not belong to you!");
-                    return;
+                    throw new RemoteException("This Task does not belong to you!");
                 }
             }
             cb.sendMessage("Sorry. Task inexistant.");
-            
+            throw new RemoteException("Sorry. Task inexistant.");
         }
 
         public void getTaskInfo(int id) throws RemoteException {

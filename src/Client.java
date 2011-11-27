@@ -248,7 +248,11 @@ public class Client implements Callbackable{
     private void getOut(int parseInt) throws RemoteException {
         if(!loggedIn()){return;}
         if(admin()){System.out.println("Your not a Company!"); return;}
-        comp.getOutputOf(parseInt);
+        try {
+            comp.getOutputOf(parseInt);
+        } catch (RemoteException e) {
+            //I choose to ignore
+        }
     }
 
 
