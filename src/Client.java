@@ -253,8 +253,10 @@ public class Client implements Callbackable{
     private void buyC(int parseInt) throws RemoteException {
         if(!loggedIn()){return;}
         if(admin()){System.out.println("Your not a Company!"); return;}
-        if(comp.buyCredits(parseInt)){
-            System.out.println("You have bought "+parseInt+" Credits. Your balance now is: " +comp.getCredits());
+        try {
+            comp.buyCredits(parseInt);
+        } catch (RemoteException e) {
+            System.out.println(e.getCause().getMessage());
         }
     }
 

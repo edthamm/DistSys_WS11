@@ -37,10 +37,15 @@ public class RComp implements Companyable{
             pcost = pc;
         }
 
-        public boolean buyCredits(int amount) throws RemoteException {
-            //TODO amount <0
-            me.setCredits(me.getCredits() + amount);
-            return true;
+        public void buyCredits(int amount) throws RemoteException {
+            if (amount > 0) {
+                me.setCredits(me.getCredits() + amount);
+                cb.sendMessage("You have bought "+amount+" Credits. Your balance now is: " +me.getCredits());
+                return;
+            }
+            else{
+                throw new RemoteException("Amount of credits to by must be positive");
+            }
         }
         
         public void executeTask(int id, String execln) throws RemoteException {

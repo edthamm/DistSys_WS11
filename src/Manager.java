@@ -9,7 +9,6 @@ import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
 
-//TODO do error handling on client input
 
 public class Manager {
     private static final boolean DEBUG = true;
