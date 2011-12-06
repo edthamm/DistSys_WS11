@@ -22,7 +22,7 @@ public class RComp implements Companyable{
         private ConcurrentHashMap<Integer,Double> Prices;
         private BufferedReader schedin;
         private PrintWriter schedout;
-        private static final boolean DEBUG = true;
+        private static final boolean DEBUG = false;
         private Manager Manager;
         
         public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m, int pc){

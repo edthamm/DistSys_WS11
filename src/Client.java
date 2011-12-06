@@ -25,7 +25,7 @@ public class Client implements Callbackable{
     private String sname;
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final boolean LAB = true;
     private Callbackable cb;
     private Adminable admin = null;

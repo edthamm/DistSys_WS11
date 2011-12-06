@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 
 
 public class Manager {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final boolean LAB = true;
     private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort preparationCost [taskDir]";
     private String bindingName;
@@ -51,7 +51,12 @@ public class Manager {
             while(u.hasMoreElements()){
                 User i = u.nextElement();
                 if(i.callback != null){
-                    i.callback.forceLogout();
+                    try{
+                        i.callback.forceLogout();
+                    }
+                    catch(Exception e){
+                        continue;
+                    }
                 }
             }
             UnicastRemoteObject.unexportObject(LHandler, true);
@@ -72,7 +77,12 @@ public class Manager {
             while(u.hasMoreElements()){
                 User i = u.nextElement();
                 if(i.callback != null){
-                    i.callback.forceLogout();
+                    try{
+                        i.callback.forceLogout();
+                    }
+                    catch(Exception e){
+                        continue;
+                    }
                 }
             }
             UnicastRemoteObject.unexportObject(LHandler, true);
