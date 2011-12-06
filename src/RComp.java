@@ -191,6 +191,7 @@ public class RComp implements Companyable{
                 }
 
                 public void run() {
+                    //TODO fix logout glitch by alway looking up cb in list and catching null pointer condition
                     if (m.status == TASKSTATE.prepared) {
                         try {
 
