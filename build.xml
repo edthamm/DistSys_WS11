@@ -28,7 +28,7 @@
 	</target>
 
 	<target name="run-manager" depends="compile" description="Run Manager.">
-		<java classname="your.ManagementComponent" fork="true" classpathref="project.classpath">
+		<java classname="Manager" fork="true" classpathref="project.classpath">
 			<assertions refid="project.assertions"/>
 			<arg value="yourBindingName"/>
 			<!-- bindingName -->
@@ -44,11 +44,11 @@
 	</target>
 
 	<target name="run-scheduler" depends="compile" description="Run Scheduler.">
-		<java classname="your.Scheduler" fork="true" classpathref="project.classpath">
+		<java classname="Scheduler" fork="true" classpathref="project.classpath">
 			<assertions refid="project.assertions"/>
 			<!-- <arg value="10000 + dslabXXX * 10"/> -->
 			<!-- tcpPort -->
-			<arg value="10000 + dslabXXX * 10 + 1"/>
+			<arg value="12371"/>
 			<!-- udpPort -->
 			<arg value="3"/>
 			<!-- minimum of active generic task engines -->
@@ -62,7 +62,7 @@
 	</target>
 
 	<target name="run-client" depends="compile" description="Run client.">
-		<java classname="your.Client" fork="true" classpathref="project.classpath">
+		<java classname="Client" fork="true" classpathref="project.classpath">
 	<assertions refid="project.assertions"/>
 			<arg value="yourBindingName"/>
 			<!-- binding name of the management component -->
@@ -72,13 +72,13 @@
 	</target>
 
 	<target name="run-gtengine1" depends="compile" description="Run 1st Generic Task Engine.">
-		<java classname="your.GenericTaskEngine" fork="true" classpathref="project.classpath">
+		<java classname="GTEngine" fork="true" classpathref="project.classpath">
 			<assertions refid="project.assertions"/>
-			<arg value="10000 + dslabXXX * 10 + 2"/>
+			<arg value="12372"/>
 			<!-- tcpPort -->
 			<arg value="localhost"/>
 			<!-- schedulerHost -->
-			<arg value="10000 + dslabXXX * 10 + 1"/>
+			<arg value="12371"/>
 			<!-- schedulerUDPPort -->
 			<arg value="1000"/>
 			<!-- alivePeriod -->
@@ -92,13 +92,13 @@
 	</target>
 
 	<target name="run-gtengine2" depends="compile" description="Run 2nd Generic Task Engine.">
-		<java classname="your.GenericTaskEngine" fork="true" classpathref="project.classpath">
+		<java classname="GTEngine" fork="true" classpathref="project.classpath">
 			<assertions refid="project.assertions"/>
-			<arg value="10000 + dslabXXX * 10 + 3"/>
+			<arg value="12373"/>
 			<!-- tcpPort -->
 			<arg value="localhost"/>
 			<!-- schedulerHost -->
-			<arg value="10000 + dslabXXX * 10 + 1"/>
+			<arg value="12371"/>
 			<!-- schedulerUDPPort -->
 			<arg value="1000"/>
 			<!-- alivePeriod -->
@@ -112,13 +112,13 @@
 	</target>
 
 	<target name="run-gtengine3" depends="compile" description="Run 3rd Generic Task Engine.">
-		<java classname="your.GenericTaskEngine" fork="true" classpathref="project.classpath">
+		<java classname="GTEngine" fork="true" classpathref="project.classpath">
 			<assertions refid="project.assertions"/>
-			<arg value="10000 + dslabXXX * 10 + 4"/>
+			<arg value="12374"/>
 			<!-- tcpPort -->
 			<arg value="localhost"/>
 			<!-- schedulerHost -->
-			<arg value="10000 + dslabXXX * 10 + 1"/>
+			<arg value="12371"/>
 			<!-- schedulerUDPPort -->
 			<arg value="1000"/>
 			<!-- alivePeriod -->
@@ -132,13 +132,13 @@
 	</target>
 
 	<target name="run-gtengine4" depends="compile" description="Run 4th Generic Task Engine.">
-		<java classname="your.GenericTaskEngine" fork="true" classpathref="project.classpath">
+		<java classname="GTEngine" fork="true" classpathref="project.classpath">
 			<assertions refid="project.assertions"/>
-			<arg value="10000 + dslabXXX * 10 + 5"/>
+			<arg value="12375"/>
 			<!-- tcpPort -->
 			<arg value="localhost"/>
 			<!-- schedulerHost -->
-			<arg value="10000 + dslabXXX * 10 + 1"/>
+			<arg value="12371"/>
 			<!-- schedulerUDPPort -->
 			<arg value="1000"/>
 			<!-- alivePeriod -->
