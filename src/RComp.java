@@ -14,8 +14,8 @@ import java.util.concurrent.Executors;
 
 public class RComp implements Companyable{
         private String name ="";
-        private Callbackable cb = null;
         private User me;
+        private Callbackable cb = null;
         private int pcost;
         private ConcurrentHashMap<Integer,MTask> Tasks;
         private ExecutorService TaskEServ = Executors.newCachedThreadPool();
@@ -28,8 +28,8 @@ public class RComp implements Companyable{
         public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m, int pc){
             name = n;
             me = u;
-            Tasks = t;
             cb = me.callback;
+            Tasks = t;
             Prices = p;
             schedin = i;
             schedout = o;
@@ -40,7 +40,11 @@ public class RComp implements Companyable{
         public void buyCredits(int amount) throws RemoteException {
             if (amount > 0) {
                 me.setCredits(me.getCredits() + amount);
-                cb.sendMessage("You have bought "+amount+" Credits. Your balance now is: " +me.getCredits());
+                if (me.callback != null) {
+                    me.callback.sendMessage("You have bought " + amount
+                            + " Credits. Your balance now is: "
+                            + me.getCredits());
+                }
                 return;
             }
             else{
@@ -51,7 +55,9 @@ public class RComp implements Companyable{
         public void executeTask(int id, String execln) throws RemoteException {
             MTask t = Tasks.get(Integer.valueOf(id));
             if(t == null){
-                cb.sendMessage("No Task with id: "+id+" known.");
+                if (me.callback != null) {
+                    cb.sendMessage("No Task with id: " + id + " known.");
+                }
                 return;
             }
             if(t.owner.contentEquals(name)){
@@ -60,12 +66,13 @@ public class RComp implements Companyable{
                     Manager.RequestMutex.acquire();
                 } catch (InterruptedException e) {
                     if(DEBUG){e.printStackTrace();}
-                    //TODO should i return here???
                 }
                 TaskEServ.execute(new TaskExecutor(t, cb, me));
             }
             else{
-                cb.sendMessage("This Task does not belong to you.");
+                if (me.callback != null) {
+                    cb.sendMessage("This Task does not belong to you.");
+                }
                 throw new RemoteException("Task not yours.");
             }
                 return;
@@ -80,45 +87,62 @@ public class RComp implements Companyable{
                 MTask T = Tasks.get(id);
                 if(T.owner.contentEquals(name)){
                     if(me.getCredits() < 0){
-                        cb.sendMessage("Not enough credits to pay for execution. Please buy credits.");
+                        if (me.callback != null) {
+                            cb.sendMessage("Not enough credits to pay for execution. Please buy credits.");
+                        }
                         throw new RemoteException("Not enough credits to pay for execution. Please buy credits.");
                     }                                       
                     if (T.status == TASKSTATE.finished) {
-                        cb.sendMessage(T.output);
+                        if (me.callback != null) {
+                            cb.sendMessage(T.output);
+                        }
                         return;
                     }
                     else{
-                        cb.sendMessage("Sorry Task has not finished executing.");
-                        throw new RemoteException("Sorry Task has not finished executing.");
+                        if (me.callback != null) {
+                            cb.sendMessage("Sorry Task has not finished executing.");
+                            throw new RemoteException("Sorry Task has not finished executing.");
+                        }
                     }
                 }
                 else{
-                    cb.sendMessage("This Task does not belong to you!");
-                    throw new RemoteException("This Task does not belong to you!");
+                    if (me.callback != null) {
+                        cb.sendMessage("This Task does not belong to you!");
+                        throw new RemoteException("This Task does not belong to you!");
+                    }
                 }
             }
-            cb.sendMessage("Sorry. Task inexistant.");
-            throw new RemoteException("Sorry. Task inexistant.");
+            if (me.callback != null) {
+                cb.sendMessage("Sorry. Task inexistant.");
+                throw new RemoteException("Sorry. Task inexistant.");
+            }
         }
 
         public void getTaskInfo(int id) throws RemoteException {
             if(Tasks.containsKey(id)){
                 MTask t = Tasks.get(id);
                 if(t.owner.contentEquals(name)){
-                    cb.sendMessage("Task: "+id+" ("+t.tname+")\n"+
-                                   "Type: "+t.ttype.toString()+"\n"+
-                                   "Assigned Engine: "+t.taskEngine+":"+t.port+"\n"+
-                                   "Status: "+t.status.toString()+"\n"+
-                                   "Costs: "+t.cost);
+                    if (me.callback != null) {
+                        cb.sendMessage("Task: " + id + " (" + t.tname + ")\n"
+                                + "Type: " + t.ttype.toString() + "\n"
+                                + "Assigned Engine: " + t.taskEngine + ":"
+                                + t.port + "\n" + "Status: "
+                                + t.status.toString() + "\n" + "Costs: "
+                                + t.cost);
+                    }
                     return;
                 }
                 else{
-                    cb.sendMessage("This Task does not belong to you!");
-                    throw new RemoteException("This Task does not belong to you!");
+                    if (me.callback != null) {
+                        cb.sendMessage("This Task does not belong to you!");
+                        throw new RemoteException("This Task does not belong to you!");
+                    }
                 }
             }
-            cb.sendMessage("Sorry. Task inexistant.");
-            throw new RemoteException("Sorry. Task inexistant.");
+            if (me.callback != null) {
+                cb.sendMessage("Sorry. Task inexistant.");
+                throw new RemoteException("Sorry. Task inexistant.");
+            }
             
         }
 
@@ -149,10 +173,12 @@ public class RComp implements Companyable{
                 if (t.ttype == TASKTYPE.LOW) {
                     me.low++;
                 }
-                int newcreds = me.getCredits() - costs;//TODO check if this rounding is any good
+                int newcreds = me.getCredits() - costs;
                 me.setCredits(newcreds);
-                mt.cost = String.valueOf(costs);//TODO is this really wanted
-                cb.sendMessage("Task prepared with id: " + mt.id);
+                mt.cost = String.valueOf(costs);
+                if (me.callback != null) {
+                    cb.sendMessage("Task prepared with id: " + mt.id);
+                }
                 return;
             }
             else{
@@ -191,7 +217,6 @@ public class RComp implements Companyable{
                 }
 
                 public void run() {
-                    //TODO fix logout glitch by alway looking up cb in list and catching null pointer condition
                     if (m.status == TASKSTATE.prepared) {
                         try {
 
@@ -221,9 +246,12 @@ public class RComp implements Companyable{
                     
                     if(m.status != TASKSTATE.assigned){
                         try {
-                            cb.sendMessage("Sorry something went wrong. Taskstate should be assigned but is: "+m.status.toString()
-                                           + "\nIf you are trying to resubmit an executing or finished Task be aware that a Task can be submitted only once.\n"
-                                           + "If you are encountering a different problem please contact our staff.");
+                            if (me.callback != null) {
+                                cb.sendMessage("Sorry something went wrong. Taskstate should be assigned but is: "
+                                                + m.status.toString()
+                                                + "\nIf you are trying to resubmit an executing or finished Task be aware that a Task can be submitted only once.\n"
+                                                + "If you are encountering a different problem please contact our staff.");
+                            }
                             return;
                         } catch (RemoteException e) {
                             if(DEBUG){e.printStackTrace();}
@@ -297,12 +325,15 @@ public class RComp implements Companyable{
                             m.status = TASKSTATE.executing;
                             m.start = System.currentTimeMillis();
                             Manager.RequestMutex.release();
-                            cb.sendMessage("Execution of task "+m.id+" started.");
-                            //TODO is this really the desired behavior???
+                            if (me.callback != null) {
+                                cb.sendMessage("Execution of task " + m.id+ " started.");
+                            }
                         }
                         else{
                             m.status = TASKSTATE.assigned;
-                            cb.sendMessage("Engine currently not available, try again later.");
+                            if (me.callback != null) {
+                                cb.sendMessage("Engine currently not available, try again later.");
+                            }
                             return;
                         }
 
@@ -311,8 +342,9 @@ public class RComp implements Companyable{
                         }
                         m.status = TASKSTATE.finished;
                         m.finish = System.currentTimeMillis();
-                        cb.sendMessage("Execution of Task "+m.id+" finished.");
-                        
+                        if (me.callback != null) {
+                            cb.sendMessage("Execution of Task " + m.id+ " finished.");
+                        }
                         long time = m.finish-m.start;
                         float timeinmin = time/(60*1000F);
                         int cost = calcCost(timeinmin);
