@@ -151,6 +151,7 @@ public class RComp implements Companyable{
             c.sendMessage("Logging out...");
             me.callback = null;
             c.sendMessage("done");
+            cb = null;
             UnicastRemoteObject.unexportObject(this, true);
             
         }
