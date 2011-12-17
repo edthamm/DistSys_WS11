@@ -130,6 +130,19 @@ public class Manager {
     private void readProperties() throws FileNotFoundException{
         readRegistry();
         readUsers(true);
+        readManager();
+    }
+    
+    private void readManager() throws FileNotFoundException{
+        InputStream in = null;
+        in = ClassLoader.getSystemResourceAsStream("manager.properties");
+        if(in != null){
+            
+        }
+        else{
+            throw new FileNotFoundException();
+        }
+        
     }
     
     private void readRegistry() throws FileNotFoundException{
