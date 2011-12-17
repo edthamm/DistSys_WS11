@@ -167,6 +167,7 @@ public class Client implements Callbackable{
         if(ehandler == null){
             System.out.println("Caution this output is UNVERIFYED.");
             System.out.println(msg);
+            System.out.println("Caution this output is UNVERIFYED.");
         }
         if(ehandler.checkIntegrity(msg, hash)){
             System.out.println("Integrity Check OK. Printing Result:");
