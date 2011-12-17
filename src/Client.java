@@ -13,9 +13,16 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 import java.util.concurrent.*;
 
+import javax.crypto.spec.SecretKeySpec;
+
+import org.bouncycastle.util.encoders.Hex;
+
+import com.sun.corba.se.impl.oa.poa.ActiveObjectMap.Key;
 
 //TODO check exceptions
 public class Client implements Callbackable{
@@ -110,8 +117,30 @@ public class Client implements Callbackable{
         }
     }
     
-    private void initializeHandler(){
-        //TODO
+    private void initializeHandler(String user){
+        try {
+            byte[] keybytes = new byte[1024];
+            String path = keydir+File.pathSeparator+user+".key";
+            FileInputStream fis = new FileInputStream(path);
+            fis.read(keybytes);
+            fis.close();
+            byte[] input = Hex.decode(keybytes);
+            java.security.Key key = new SecretKeySpec(input, "HmacSHA256");
+            
+            ehandler = new EncryptionHandler(key,"HmacSHA256");
+            
+        } catch (InvalidKeyException e) {
+            System.out.println("Sorry there is something wrong with your key pleas check that. You will not be able to recieve Output.");
+            if(DEBUG){e.printStackTrace();}
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Sorry there is something wrong with the Algorithm for integrity check. You will not be able to recieve Output.");
+            if(DEBUG){e.printStackTrace();}
+        } catch (FileNotFoundException e) {
+            System.out.println("Sorry Keyfile not found. You will not be able to recieve Output.");
+            if(DEBUG){e.printStackTrace();}
+        } catch (IOException e) {
+            if(DEBUG){e.printStackTrace();}
+        }
     }
     
     public void createStub(){
@@ -343,8 +372,10 @@ public class Client implements Callbackable{
         
         try {
             if(admin != null || comp != null){System.out.println("Already logged in."); return null;}
+            
             Registry r = LocateRegistry.getRegistry(mancomp, port);
             Loginable l = (Loginable) r.lookup(sname);
+            initializeHandler(user);
             return l.login(user, pass, cb);
         }
         catch(RemoteException e){
@@ -362,6 +393,9 @@ public class Client implements Callbackable{
      * Postconditions: logged out
      */
     private void logout() throws RemoteException{
+        if(ehandler != null){
+            ehandler = null;
+        }
         if(admin != null){
             admin.logout();
             admin = null;
