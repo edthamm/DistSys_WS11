@@ -16,6 +16,9 @@ public class Manager {
     private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort preparationCost [taskDir]";
     private String bindingName;
     private String schedHost;
+    private String keydir;
+    private String enckeyloc;
+    private String deckeyloc;
     private int schedTP;
     private int regPort;
     private int prepcosts;
@@ -136,7 +139,28 @@ public class Manager {
         InputStream in = null;
         in = ClassLoader.getSystemResourceAsStream("manager.properties");
         if(in != null){
-            
+            java.util.Properties manpropfile = new java.util.Properties();
+            try {
+                manpropfile.load(in);
+                Set<String> manprops = manpropfile.stringPropertyNames();
+                
+                for(String prop : manprops){
+                    if(prop.contentEquals("keys.dir")){
+                        keydir = manpropfile.getProperty(prop);
+                    }
+                    if(prop.contentEquals("keys.en")){
+                        enckeyloc = manpropfile.getProperty(prop);
+                    }
+                    if(prop.contentEquals("keys.de")){
+                        deckeyloc = manpropfile.getProperty(prop);                    
+                    }
+                }
+                
+            } catch (IOException e) {
+                System.out.print("Could not read from manager.properties. Exiting.\n");
+                exitRoutineFail();
+                if(DEBUG){e.printStackTrace();}
+            }
         }
         else{
             throw new FileNotFoundException();
