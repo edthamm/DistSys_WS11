@@ -16,6 +16,7 @@ public class RComp implements Companyable{
         private String name ="";
         private User me;
         private Callbackable cb = null;
+        private EncryptionHandler ehandler = null;
         private int pcost;
         private ConcurrentHashMap<Integer,MTask> Tasks;
         private ExecutorService TaskEServ = Executors.newCachedThreadPool();
@@ -35,6 +36,11 @@ public class RComp implements Companyable{
             schedout = o;
             Manager = m;
             pcost = pc;
+            initializeEncryptionHandler();
+        }
+        
+        private void initializeEncryptionHandler(){
+            //TODO
         }
 
         public void buyCredits(int amount) throws RemoteException {
@@ -94,8 +100,8 @@ public class RComp implements Companyable{
                     }                                       
                     if (T.status == TASKSTATE.finished) {
                         if (me.callback != null) {
-                            //TODO Verify Output.
-                            cb.sendMessage(T.output);
+                            byte[] hash = ehandler.generateIntegrityCheck(T.output.getBytes());
+                            cb.handleResult(T.output, hash);
                         }
                         return;
                     }

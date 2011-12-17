@@ -24,6 +24,7 @@ public class Client implements Callbackable{
     private int port;
     private String sname;
     private String keydir;
+    private EncryptionHandler ehandler = null; 
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = false;
@@ -109,6 +110,10 @@ public class Client implements Callbackable{
         }
     }
     
+    private void initializeHandler(){
+        //TODO
+    }
+    
     public void createStub(){
         try {
             cb = (Callbackable) UnicastRemoteObject.exportObject(this, 0);
@@ -130,6 +135,16 @@ public class Client implements Callbackable{
             logout();
         } catch (RemoteException e) {
             if(DEBUG){e.printStackTrace();}
+        }
+    }
+    
+    public void handleResult(String msg, byte[] hash) throws RemoteException {
+        if(ehandler.checkIntegrity(msg, hash)){
+            System.out.println("Integrity Check OK. Printing Result:");
+            System.out.println(msg);
+        }
+        else{
+            System.out.println("Integrity Check FAILED.\n Please try again.\n If the problem persists please contact our Staff.");
         }
     }
     
@@ -275,7 +290,7 @@ public class Client implements Callbackable{
         if(!loggedIn()){return;}
         if(admin()){System.out.println("Your not a Company!"); return;}
         try {
-            comp.getOutputOf(parseInt);
+             comp.getOutputOf(parseInt);
         } catch (RemoteException e) {
             //I choose to ignore
         }
@@ -506,6 +521,9 @@ public class Client implements Callbackable{
         }
         
     }
+
+
+
 
 
 }
