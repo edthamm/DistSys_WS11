@@ -126,13 +126,13 @@ public class Client implements Callbackable{
             ehandler = new EncryptionHandler(key,"HmacSHA256");
             
         } catch (InvalidKeyException e) {
-            System.out.println("Sorry there is something wrong with your key pleas check that. You will not be able to recieve Output.");
+            System.out.println("Sorry there is something wrong with your key pleas check that. You will not be able to recieve verifyed Output.");
             if(DEBUG){e.printStackTrace();}
         } catch (NoSuchAlgorithmException e) {
-            System.out.println("Sorry there is something wrong with the Algorithm for integrity check. You will not be able to recieve Output.");
+            System.out.println("Sorry there is something wrong with the Algorithm for integrity check. You will not be able to recieve verifyed Output.");
             if(DEBUG){e.printStackTrace();}
         } catch (FileNotFoundException e) {
-            System.out.println("Sorry Keyfile not found. You will not be able to recieve Output.");
+            System.out.println("Sorry Keyfile not found. You will not be able to recieve verifyed Output.");
             if(DEBUG){e.printStackTrace();}
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
@@ -164,6 +164,10 @@ public class Client implements Callbackable{
     }
     
     public void handleResult(String msg, byte[] hash) throws RemoteException {
+        if(ehandler == null){
+            System.out.println("Caution this output is UNVERIFYED.");
+            System.out.println(msg);
+        }
         if(ehandler.checkIntegrity(msg, hash)){
             System.out.println("Integrity Check OK. Printing Result:");
             System.out.println(msg);
