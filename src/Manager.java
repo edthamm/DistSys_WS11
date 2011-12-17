@@ -29,10 +29,9 @@ public class Manager {
     public Semaphore RequestMutex = new Semaphore(1);
 
     
-    public Manager(String bn, String sh, int tp, int p){
+    public Manager(String bn, String sh, int p){
         bindingName = bn;
         schedHost = sh;
-        schedTP = tp;
         prepcosts = p;
     }
     
@@ -230,13 +229,13 @@ public class Manager {
     }
 
     public static void main(String[] args) {
-        if(args.length < 4 || args.length > 5){
+        if(args.length < 3 || args.length > 4){
             System.out.print(usage);
             System.exit(1);
         }
         
         try {
-            Manager m = new Manager(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+            Manager m = new Manager(args[0], args[1], Integer.parseInt(args[3]));
             
             m.readProperties();
             m.inputListen();
