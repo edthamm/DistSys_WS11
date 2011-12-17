@@ -23,6 +23,7 @@ public class Client implements Callbackable{
     private String mancomp;
     private int port;
     private String sname;
+    private String keydir;
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = false;
@@ -48,6 +49,29 @@ public class Client implements Callbackable{
         }
     }
     
+
+    private void readkeyProp() throws FileNotFoundException{
+        InputStream in = null;
+        in = ClassLoader.getSystemResourceAsStream("client.properties");
+        if(in != null){
+            java.util.Properties keypath = new java.util.Properties();
+            try {
+                keypath.load(in);
+                Set<String> kpath = keypath.stringPropertyNames();
+                for(String p : kpath){
+                    if(p.contentEquals("keys.dir")){
+                        keydir = keypath.getProperty(p);
+                    }
+                }
+                
+            } catch (IOException e) {
+                System.out.print("Could not read from client.properties. Exiting.\n");
+                exit();
+                if(DEBUG){e.printStackTrace();}
+            }
+        }
+        
+    }
     
     private void readRegProp() throws FileNotFoundException{
         InputStream in = null;
@@ -469,6 +493,7 @@ public class Client implements Callbackable{
         try{
             c = new Client(args[0], args[1]);
             c.readRegProp();// catch fnf
+            c.readkeyProp();
             c.createStub();
             c.run();
         } catch(NumberFormatException e){
@@ -479,5 +504,7 @@ public class Client implements Callbackable{
         }
         
     }
+
+
 }
 
