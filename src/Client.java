@@ -70,7 +70,9 @@ public class Client implements Callbackable{
                 if(DEBUG){e.printStackTrace();}
             }
         }
-        
+        else{
+            throw new FileNotFoundException();
+        }
     }
     
     private void readRegProp() throws FileNotFoundException{
