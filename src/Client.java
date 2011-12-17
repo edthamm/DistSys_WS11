@@ -17,12 +17,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 import java.util.concurrent.*;
-
 import javax.crypto.spec.SecretKeySpec;
-
 import org.bouncycastle.util.encoders.Hex;
-
-import com.sun.corba.se.impl.oa.poa.ActiveObjectMap.Key;
 
 //TODO check exceptions
 public class Client implements Callbackable{
