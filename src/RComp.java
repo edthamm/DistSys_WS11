@@ -94,6 +94,7 @@ public class RComp implements Companyable{
                     }                                       
                     if (T.status == TASKSTATE.finished) {
                         if (me.callback != null) {
+                            //TODO Verify Output.
                             cb.sendMessage(T.output);
                         }
                         return;
