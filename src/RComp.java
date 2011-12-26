@@ -26,7 +26,7 @@ public class RComp implements Companyable{
         private static final boolean DEBUG = false;
         private Manager Manager;
         
-        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m, int pc){
+        public RComp(String n, User u, ConcurrentHashMap<Integer,MTask> t,ConcurrentHashMap<Integer,Double> p,BufferedReader i,PrintWriter o, Manager m, int pc, EncryptionHandler eh){
             name = n;
             me = u;
             cb = me.callback;
@@ -36,13 +36,9 @@ public class RComp implements Companyable{
             schedout = o;
             Manager = m;
             pcost = pc;
-            initializeEncryptionHandler();
+            ehandler = eh;
         }
         
-        private void initializeEncryptionHandler(){
-            //TODO
-        }
-
         public void buyCredits(int amount) throws RemoteException {
             if (amount > 0) {
                 me.setCredits(me.getCredits() + amount);
@@ -223,7 +219,7 @@ public class RComp implements Companyable{
                     me = u;
 
                 }
-
+                //TODO encrypt all messages
                 public void run() {
                     if (m.status == TASKSTATE.prepared) {
                         try {

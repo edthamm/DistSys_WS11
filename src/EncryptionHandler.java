@@ -13,11 +13,15 @@ public class EncryptionHandler {
         hmac.init(key);
     }
     
-    public String encryptMessage(){
+    public byte[] encryptMessage(String msg){
         return null;
     }
     
-    public String decryptMessage(){
+    public byte[] encryptMessage(byte[] msg){
+        return null;
+    }
+    
+    public String decryptMessage(String msg){
         return null;
     }
     

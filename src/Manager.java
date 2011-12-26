@@ -5,9 +5,13 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
+
+import org.bouncycastle.openssl.PEMReader;
 
 
 public class Manager {
@@ -19,6 +23,7 @@ public class Manager {
     private String keydir;
     private String enckeyloc;
     private String deckeyloc;
+    private PublicKey schedpub;
     private int schedTP;
     private int regPort;
     private int prepcosts;
@@ -29,7 +34,9 @@ public class Manager {
     private ConcurrentHashMap<Integer,Double> Prices = new ConcurrentHashMap<Integer,Double>();
     private ConcurrentHashMap<Integer,MTask> Tasks = new ConcurrentHashMap<Integer,MTask>();
     private LoginHandler LHandler = new LoginHandler(this);
+    private EncryptionHandler eh = null;
     public Semaphore RequestMutex = new Semaphore(1);
+    
 
     
     public Manager(String bn, String sh, int p){
@@ -129,10 +136,37 @@ public class Manager {
         }
     }
     
+    private void schedAuthenticate(){
+        //generate secrandom for challenge
+        SecureRandom r = new SecureRandom();
+        final byte[] number = new byte[32];
+        r.nextBytes(number);
+        String firstmsg = "!login "+number.toString();
+        byte[] encrypted = eh.encryptMessage(firstmsg);
+        //send challenge 
+        schedout.println(encrypted);
+        schedout.flush();
+        
+        
+        //TODO
+    }
+    
     private void readProperties() throws FileNotFoundException{
         readRegistry();
         readUsers(true);
         readManager();
+        readKeys();
+    }
+
+    private void readKeys() throws FileNotFoundException{
+        PEMReader pr = new PEMReader(new FileReader(enckeyloc));
+        try {
+            schedpub = (PublicKey) pr.readObject();
+        } catch (IOException e) {
+            System.out.println("Something went wrong with reading the sched pub key bailing out");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutineFail();
+        }
     }
     
     private void readManager() throws FileNotFoundException{
@@ -148,10 +182,10 @@ public class Manager {
                     if(prop.contentEquals("keys.dir")){
                         keydir = manpropfile.getProperty(prop);
                     }
-                    if(prop.contentEquals("keys.en")){
+                    if(prop.contentEquals("key.en")){
                         enckeyloc = manpropfile.getProperty(prop);
                     }
-                    if(prop.contentEquals("keys.de")){
+                    if(prop.contentEquals("key.de")){
                         deckeyloc = manpropfile.getProperty(prop);                    
                     }
                 }
@@ -264,6 +298,7 @@ public class Manager {
             m.readProperties();
             m.inputListen();
             m.schedConnect();
+            m.schedAuthenticate();
             m.setupRMI();
             
             
@@ -333,7 +368,7 @@ public class Manager {
                     if(u instanceof Admin){
                         return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
-                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m, prepcosts), 0);
+                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m, prepcosts, eh), 0);
                     return retval;
                 }
             }
