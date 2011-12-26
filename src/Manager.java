@@ -11,6 +11,8 @@ import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
 
+import javax.crypto.SecretKey;
+
 import org.bouncycastle.openssl.PEMReader;
 
 
@@ -137,18 +139,38 @@ public class Manager {
     }
     
     private void schedAuthenticate(){
+        
         //generate secrandom for challenge
         SecureRandom r = new SecureRandom();
         final byte[] number = new byte[32];
         r.nextBytes(number);
         String firstmsg = "!login "+number.toString();
-        byte[] encrypted = eh.encryptMessage(firstmsg);
+        String encrypted = eh.encryptMessage(firstmsg);
+        
         //send challenge 
         schedout.println(encrypted);
         schedout.flush();
         
-        
-        //TODO
+        //get response
+        try {
+            String firstrspenc = schedin.readLine();
+            String firstrsp = eh.decryptMessage(firstrspenc);
+            
+            String[] split = firstrsp.split(" ");
+            if(!split[1].contentEquals(number.toString())){
+                System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+number.toString());
+                exitRoutineFail();
+            }
+            //TODO parse out shared AES and IV
+            
+            //TODO reinitialize eh
+            
+            schedout.println(eh.encryptMessage(split[2]));
+            schedout.flush();
+            
+        } catch (IOException e) {
+            if(DEBUG){e.printStackTrace();}
+        }
     }
     
     private void readProperties() throws FileNotFoundException{
