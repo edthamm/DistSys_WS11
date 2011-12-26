@@ -5,15 +5,21 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
 
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PasswordFinder;
 
 
 public class Manager {
@@ -26,6 +32,7 @@ public class Manager {
     private String enckeyloc;
     private String deckeyloc;
     private PublicKey schedpub;
+    private PrivateKey manpriv;
     private int schedTP;
     private int regPort;
     private int prepcosts;
@@ -140,6 +147,17 @@ public class Manager {
     
     private void schedAuthenticate(){
         
+        //initialize eh
+        try {
+            eh= new EncryptionHandler(schedpub, manpriv, "RSA/NONE/OAEPWithSHA256AndMGF1Padding");
+        } catch (InvalidKeyException e1) {
+            if(DEBUG){e1.printStackTrace();}
+        } catch (NoSuchAlgorithmException e1) {
+            if(DEBUG){e1.printStackTrace();}
+        } catch (NoSuchPaddingException e1) {
+            if(DEBUG){e1.printStackTrace();}
+        }
+        
         //generate secrandom for challenge
         SecureRandom r = new SecureRandom();
         final byte[] number = new byte[32];
@@ -181,14 +199,38 @@ public class Manager {
     }
 
     private void readKeys() throws FileNotFoundException{
-        PEMReader pr = new PEMReader(new FileReader(enckeyloc));
+        PEMReader schedpubkey = new PEMReader(new FileReader(enckeyloc));
         try {
-            schedpub = (PublicKey) pr.readObject();
+            schedpub = (PublicKey) schedpubkey.readObject();
         } catch (IOException e) {
             System.out.println("Something went wrong with reading the sched pub key bailing out");
             if(DEBUG){e.printStackTrace();}
             exitRoutineFail();
         }
+        PEMReader mysec = new PEMReader(new FileReader(deckeyloc), new PasswordFinder(){
+
+            public char[] getPassword() {
+                System.out.println("Enter pass phrase:");
+                try {
+                    return new BufferedReader(new InputStreamReader(System.in)).readLine().toCharArray();
+                } catch (IOException e){
+                    System.out.println("Error reading from stdin. Bailing out.");
+                    if(DEBUG){e.printStackTrace();}
+                    exitRoutineFail();
+                } 
+                return null;
+            }
+        });
+        
+        try {
+            KeyPair kp = (KeyPair) mysec.readObject();
+            manpriv = kp.getPrivate();
+        } catch (IOException e) {
+            System.out.println("Error reading from KeyPemMySec. Bailing out.");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutineFail();
+        }
+        
     }
     
     private void readManager() throws FileNotFoundException{
