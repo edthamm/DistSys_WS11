@@ -17,19 +17,17 @@ public class EncryptionHandler {
     }
     
     public EncryptionHandler(Key secret, String Algorithm, SecureRandom IV) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
-        if(IV == null){
-            enccipher = Cipher.getInstance(Algorithm);
-            deccipher = Cipher.getInstance(Algorithm);
-            enccipher.init(Cipher.ENCRYPT_MODE, secret);
-            deccipher.init(Cipher.DECRYPT_MODE, secret);
-        }
-        else{
             enccipher = Cipher.getInstance(Algorithm);
             deccipher = Cipher.getInstance(Algorithm);
             enccipher.init(Cipher.ENCRYPT_MODE, secret, IV);
             deccipher.init(Cipher.DECRYPT_MODE, secret, IV);
-        }
     }
+    public EncryptionHandler(Key secretenc, Key secretdec, String Algorithm) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
+        enccipher = Cipher.getInstance(Algorithm);
+        deccipher = Cipher.getInstance(Algorithm);
+        enccipher.init(Cipher.ENCRYPT_MODE, secretenc);
+        deccipher.init(Cipher.DECRYPT_MODE, secretdec);
+}
     
     public String encryptMessage(String msg){
         return null;
