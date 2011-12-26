@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
@@ -26,6 +25,7 @@ public class Manager {
     private static final boolean DEBUG = false;
     private static final boolean LAB = true;
     private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort preparationCost [taskDir]";
+    private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private String bindingName;
     private String schedHost;
     private String keydir;
@@ -149,7 +149,7 @@ public class Manager {
         
         //initialize eh
         try {
-            eh= new EncryptionHandler(schedpub, manpriv, "RSA/NONE/OAEPWithSHA256AndMGF1Padding");
+            eh= new EncryptionHandler(schedpub, manpriv, RSASPEC);
         } catch (InvalidKeyException e1) {
             if(DEBUG){e1.printStackTrace();}
         } catch (NoSuchAlgorithmException e1) {

@@ -13,10 +13,17 @@
 
 import java.io.*;
 import java.net.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Enumeration;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
+
+import javax.crypto.NoSuchPaddingException;
 
 
 public class Scheduler extends AbstractServer {
@@ -26,6 +33,13 @@ public class Scheduler extends AbstractServer {
     private int maxT;
     private int tout;
     private int checkP;
+    private EncryptionHandler eh;
+    private PrivateKey schedpriv;
+    private PublicKey manpub;
+    private String keydir;
+    private String enckeyloc;
+    private String deckeyloc;
+    private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private static final int BUFSIZE = 1024;
     private static final int MAXCOEF = 1024;
     private Timer etime;
@@ -36,8 +50,7 @@ public class Scheduler extends AbstractServer {
     private Controller c = null;
     private static final boolean DEBUG = false;
     
-    public Scheduler(int tcpPort, int udpPort, int min, int max, int timeout, int checkPeriod){
-        Tport = tcpPort;
+    public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
         uPort = udpPort;
         minT = min;
         maxT = max;
@@ -50,6 +63,57 @@ public class Scheduler extends AbstractServer {
         c.start();        
     }
     
+    private void setupEH() throws FileNotFoundException{
+        readProperties();
+        readKeys();
+        try {
+            eh = new EncryptionHandler(manpub, schedpriv, RSASPEC);
+        } catch (InvalidKeyException e) {
+            if(DEBUG){e.printStackTrace();}
+        } catch (NoSuchAlgorithmException e) {
+            if(DEBUG){e.printStackTrace();}
+        } catch (NoSuchPaddingException e) {
+            if(DEBUG){e.printStackTrace();}
+        }
+    }
+    
+    private void readKeys(){
+        //TODO
+    }
+    
+    private void readProperties() throws FileNotFoundException{
+        InputStream in = null;
+        in = ClassLoader.getSystemResourceAsStream("manager.properties");
+        if(in != null){
+            java.util.Properties schedpropfile = new java.util.Properties();
+            try {
+                schedpropfile.load(in);
+                Set<String> shedprops = schedpropfile.stringPropertyNames();
+                
+                for(String prop : shedprops){
+                    if(prop.contentEquals("tcp.port")){
+                        //TODO throw
+                        Tport = Integer.parseInt(schedpropfile.get(prop).toString());
+                    }
+                    if(prop.contentEquals("key.en")){
+                        enckeyloc = schedpropfile.getProperty(prop);
+                    }
+                    if(prop.contentEquals("key.de")){
+                        deckeyloc = schedpropfile.getProperty(prop);                    
+                    }
+                }
+                
+            } catch (IOException e) {
+                System.out.print("Could not read from scheduler.properties. Exiting.\n");
+                exitRoutineFail();
+                if(DEBUG){e.printStackTrace();}
+            }
+        }
+        else{
+            throw new FileNotFoundException();
+        }
+    }
+
     public void inputListen(){
         InputListener i = new InputListener();
         i.start();        
@@ -160,6 +224,7 @@ public class Scheduler extends AbstractServer {
         try {
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
             
+            sched.setupEH();
             sched.inputListen();
             sched.control();
             sched.tcpListen();
@@ -212,6 +277,12 @@ public class Scheduler extends AbstractServer {
  *  Postconditions:
  */
         private String processInput(String input, String ip) {
+            //TODO set up connection
+            
+            
+            
+            
+            
             String[] in = input.split(" ");
 
             if(in[0].contentEquals("!requestEngine")){
