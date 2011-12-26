@@ -14,6 +14,7 @@
 import java.io.*;
 import java.net.*;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -24,6 +25,9 @@ import java.util.TimerTask;
 import java.util.concurrent.*;
 
 import javax.crypto.NoSuchPaddingException;
+
+import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PasswordFinder;
 
 
 public class Scheduler extends AbstractServer {
@@ -77,8 +81,38 @@ public class Scheduler extends AbstractServer {
         }
     }
     
-    private void readKeys(){
-        //TODO
+    private void readKeys() throws FileNotFoundException{
+        PEMReader manpubkey = new PEMReader(new FileReader(enckeyloc));
+        try {
+            manpub = (PublicKey) manpubkey.readObject();
+        } catch (IOException e) {
+            System.out.println("Something went wrong with reading the sched pub key bailing out");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutineFail();
+        }
+        PEMReader mysec = new PEMReader(new FileReader(deckeyloc), new PasswordFinder(){
+
+            public char[] getPassword() {
+                System.out.println("Enter pass phrase:");
+                try {
+                    return new BufferedReader(new InputStreamReader(System.in)).readLine().toCharArray();
+                } catch (IOException e){
+                    System.out.println("Error reading from stdin. Bailing out.");
+                    if(DEBUG){e.printStackTrace();}
+                    exitRoutineFail();
+                } 
+                return null;
+            }
+        });
+        
+        try {
+            KeyPair kp = (KeyPair) mysec.readObject();
+            schedpriv = kp.getPrivate();
+        } catch (IOException e) {
+            System.out.println("Error reading from KeyPemMySec. Bailing out.");
+            if(DEBUG){e.printStackTrace();}
+            exitRoutineFail();
+        }
     }
     
     private void readProperties() throws FileNotFoundException{
@@ -222,7 +256,8 @@ public class Scheduler extends AbstractServer {
         }
         
         try {
-            Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]),Integer.parseInt(args[5]));
+            //TODO check arguments
+            Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]));
             
             sched.setupEH();
             sched.inputListen();
