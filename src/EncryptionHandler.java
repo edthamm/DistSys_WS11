@@ -19,11 +19,12 @@ public class EncryptionHandler {
         hmac.init(key);
     }
     
-    public EncryptionHandler(Key secret, String Algorithm, SecureRandom IV) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
+    public EncryptionHandler(Key secret, String Algorithm, byte[] IV) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
             enccipher = Cipher.getInstance(Algorithm);
             deccipher = Cipher.getInstance(Algorithm);
-            enccipher.init(Cipher.ENCRYPT_MODE, secret, IV);
-            deccipher.init(Cipher.DECRYPT_MODE, secret, IV);
+            //TODO IV
+            enccipher.init(Cipher.ENCRYPT_MODE, secret);
+            deccipher.init(Cipher.DECRYPT_MODE, secret);
     }
     public EncryptionHandler(Key secretenc, Key secretdec, String Algorithm) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
         enccipher = Cipher.getInstance(Algorithm);

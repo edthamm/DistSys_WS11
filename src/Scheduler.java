@@ -18,6 +18,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Enumeration;
 import java.util.Set;
@@ -25,11 +26,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
+
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 
 public class Scheduler extends AbstractServer {
@@ -287,27 +292,41 @@ public class Scheduler extends AbstractServer {
     // Client handling is done in worker.
    
     private class Worker extends AbstractServer.Worker{
+        PrintWriter out;
+        BufferedReader inreader;
         public Worker(Socket s) {
             super(s);
         }
         public void run(){
             try{
-                PrintWriter out = new PrintWriter(Csock.getOutputStream());
-                BufferedReader in = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
+                out = new PrintWriter(Csock.getOutputStream());
+                inreader = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
                 
                 String input, output;
                 
-                while((input = in.readLine()) != null){
+                while((input = inreader.readLine()) != null){
                     output = processInput(input,Csock.getInetAddress().toString().substring(1));
-                    out.println(output);
-                    out.flush();
+                    if (output != null) {
+                        String encryptedoutput = eh.encryptMessage(output);
+                        out.println(encryptedoutput);
+                        out.flush();
+                    }
                 }
-                in.close();
+                inreader.close();
                 out.close();
                 Csock.close();
                 return;
             }
             catch(IOException e){
+                if(DEBUG){e.printStackTrace();}
+            } catch (Base64DecodingException e) {
+                // TODO Auto-generated catch block
+                if(DEBUG){e.printStackTrace();}
+            } catch (IllegalBlockSizeException e) {
+                // TODO Auto-generated catch block
+                if(DEBUG){e.printStackTrace();}
+            } catch (BadPaddingException e) {
+                // TODO Auto-generated catch block
                 if(DEBUG){e.printStackTrace();}
             }
         }
@@ -315,15 +334,19 @@ public class Scheduler extends AbstractServer {
  *  Preconditions: Client ensures that in !requestEngine only HIGH,MIDDLE,LOW are allowed on in[2], Companies not null
  *  Postconditions:
  */
-        private String processInput(String input, String ip) {
+        private String processInput(String encrypted, String ip) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException, IOException {
             //TODO set up connection
-            
-            
-            
-            
+            String input = eh.decryptMessage(encrypted);   
             
             String[] in = input.split(" ");
-
+            if(in[0].contentEquals("!login")){
+                if(performLogin(in)){
+                    return null;
+                }
+                else{
+                    return "Login unsuccessfull";
+                }
+            }
             if(in[0].contentEquals("!requestEngine")){
                 GTEntry g = schedule(in[2]);
                 if(g == null){
@@ -334,6 +357,26 @@ public class Scheduler extends AbstractServer {
                 
             }
             return "Unrecognised message send !requestEngine."; //would not do this in production gives away to much info.
+        }
+        
+        private boolean performLogin(String [] in) throws IllegalBlockSizeException, BadPaddingException, IOException, Base64DecodingException{
+            SecureRandom r = new SecureRandom();
+            final byte[] number = new byte[32];
+            final byte[] session = new byte[256];
+            final byte[] iv = new byte[16];
+            r.nextBytes(number);
+            r.nextBytes(session);
+            r.nextBytes(iv);
+            
+            String returnmsg = "!ok " + in[1] + new String(number) + new String(session)+ new String(iv);
+            out.println(eh.encryptMessage(returnmsg));
+            String authentmsg = inreader.readLine();
+            String challenge = eh.decryptMessage(authentmsg);
+            //TODO check this
+            if(challenge.getBytes() == number){
+                return true;
+            }
+            return false;
         }
         
     }

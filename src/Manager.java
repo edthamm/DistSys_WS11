@@ -197,8 +197,8 @@ public class Manager {
             String firstrsp = eh.decryptMessage(firstrspenc);
             
             String[] split = firstrsp.split(" ");
-            if(!split[1].contentEquals(number.toString())){
-                System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+number.toString());
+            if(split[1].getBytes() != number){
+                System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+new String(number));
                 exitRoutineFail();
             }
             //TODO parse out shared AES and IV
