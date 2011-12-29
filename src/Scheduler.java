@@ -13,7 +13,6 @@
 
 import java.io.*;
 import java.net.*;
-import java.nio.CharBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -304,10 +303,10 @@ public class Scheduler extends AbstractServer {
                 inreader = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
                 
                 String input, output;
-                CharBuffer target = null;
+                char[] target = new char[2048];
                 //TODO find suited reading method
                 while((inreader.read(target)) != -1){
-                    input = target.toString();
+                    input = new String(target);
                     output = processInput(input,Csock.getInetAddress().toString().substring(1));
                     if (output != null) {
                         String encryptedoutput = eh.encryptMessage(output);
@@ -372,6 +371,7 @@ public class Scheduler extends AbstractServer {
             r.nextBytes(iv);
             
             String returnmsg = "!ok " + in[1] + new String(number) + new String(session)+ new String(iv);
+            //TODO we are now fine till here
             out.println(eh.encryptMessage(returnmsg));
             String authentmsg = inreader.readLine();
             String challenge = eh.decryptMessage(authentmsg);
