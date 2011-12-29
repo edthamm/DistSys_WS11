@@ -16,11 +16,15 @@ import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
+
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 
 public class Manager {
@@ -169,11 +173,23 @@ public class Manager {
         final byte[] number = new byte[32];
         r.nextBytes(number);
         String firstmsg = "!login "+ new String(number);
-        String encrypted = eh.encryptMessage(firstmsg);
+        String encrypted;
+
+        try {
+            encrypted = eh.encryptMessage(firstmsg);
+            
+            //send challenge 
+            schedout.println(encrypted);
+            schedout.flush();
+        } catch (IllegalBlockSizeException e1) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e1.printStackTrace();}
+        } catch (BadPaddingException e1) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e1.printStackTrace();}
+        }
         
-        //send challenge 
-        schedout.println(encrypted);
-        schedout.flush();
+
         
         //get response
         try {
@@ -193,6 +209,15 @@ public class Manager {
             schedout.flush();
             
         } catch (IOException e) {
+            if(DEBUG){e.printStackTrace();}
+        } catch (Base64DecodingException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (IllegalBlockSizeException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (BadPaddingException e) {
+            // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         }
     }

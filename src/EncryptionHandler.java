@@ -2,6 +2,9 @@ import java.security.*;
 
 import javax.crypto.*;
 
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+
 public class EncryptionHandler {
 
     private Key key;
@@ -29,12 +32,18 @@ public class EncryptionHandler {
         deccipher.init(Cipher.DECRYPT_MODE, secretdec);
 }
     
-    public String encryptMessage(String msg){
-        return null;
+    public String encryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException{
+        String b64 = Base64.encode(msg.getBytes());
+        byte[] cipher = enccipher.doFinal(b64.getBytes());
+        String cipherb64 = Base64.encode(cipher);
+        return cipherb64;
     }
     
-    public String decryptMessage(String msg){
-        return null;
+    public String decryptMessage(String msg) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException{
+        byte[] cipher = Base64.decode(msg);
+        byte[] b64 = deccipher.doFinal(cipher);
+        String clear = new String(Base64.decode(b64));
+        return clear;
     }
     
     public byte[] generateIntegrityCheck(byte[] msg){
