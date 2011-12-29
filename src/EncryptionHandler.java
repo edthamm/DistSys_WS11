@@ -26,11 +26,11 @@ public class EncryptionHandler {
             enccipher.init(Cipher.ENCRYPT_MODE, secret);
             deccipher.init(Cipher.DECRYPT_MODE, secret);
     }
-    public EncryptionHandler(Key secretenc, Key secretdec, String Algorithm) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
+    public EncryptionHandler(Key enc, Key dec, String Algorithm) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException{
         enccipher = Cipher.getInstance(Algorithm);
         deccipher = Cipher.getInstance(Algorithm);
-        enccipher.init(Cipher.ENCRYPT_MODE, secretenc);
-        deccipher.init(Cipher.DECRYPT_MODE, secretdec);
+        enccipher.init(Cipher.ENCRYPT_MODE, enc);
+        deccipher.init(Cipher.DECRYPT_MODE, dec);
 }
     
     public String encryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException{

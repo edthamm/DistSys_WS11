@@ -56,7 +56,7 @@ public class Manager {
     
     public Manager(String bn, String sh, int p){
         //TODO check lab
-        Security.insertProviderAt(new BouncyCastleProvider(), 2);
+        Security.insertProviderAt(new BouncyCastleProvider(), 1);
         bindingName = bn;
         schedHost = sh;
         prepcosts = p;
@@ -179,7 +179,7 @@ public class Manager {
             encrypted = eh.encryptMessage(firstmsg);
             
             //send challenge 
-            schedout.println(encrypted);
+            schedout.print(encrypted);
             schedout.flush();
         } catch (IllegalBlockSizeException e1) {
             // TODO Auto-generated catch block

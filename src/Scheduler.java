@@ -13,6 +13,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.CharBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -59,11 +60,11 @@ public class Scheduler extends AbstractServer {
     private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
         //TODO check Lab
-        Security.insertProviderAt(new BouncyCastleProvider(), 2);
+        Security.insertProviderAt(new BouncyCastleProvider(), 1);
         uPort = udpPort;
         minT = min;
         maxT = max;
@@ -303,8 +304,10 @@ public class Scheduler extends AbstractServer {
                 inreader = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
                 
                 String input, output;
-                
-                while((input = inreader.readLine()) != null){
+                CharBuffer target = null;
+                //TODO find suited reading method
+                while((inreader.read(target)) != -1){
+                    input = target.toString();
                     output = processInput(input,Csock.getInetAddress().toString().substring(1));
                     if (output != null) {
                         String encryptedoutput = eh.encryptMessage(output);
