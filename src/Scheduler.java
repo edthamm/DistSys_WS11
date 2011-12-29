@@ -18,6 +18,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Security;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.Timer;
@@ -26,6 +27,7 @@ import java.util.concurrent.*;
 
 import javax.crypto.NoSuchPaddingException;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
 
@@ -55,6 +57,8 @@ public class Scheduler extends AbstractServer {
     private static final boolean DEBUG = false;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
+        //TODO check Lab
+        Security.insertProviderAt(new BouncyCastleProvider(), 2);
         uPort = udpPort;
         minT = min;
         maxT = max;
@@ -117,7 +121,7 @@ public class Scheduler extends AbstractServer {
     
     private void readProperties() throws FileNotFoundException{
         InputStream in = null;
-        in = ClassLoader.getSystemResourceAsStream("manager.properties");
+        in = ClassLoader.getSystemResourceAsStream("scheduler.properties");
         if(in != null){
             java.util.Properties schedpropfile = new java.util.Properties();
             try {

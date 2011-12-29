@@ -11,20 +11,22 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
 
 import javax.crypto.NoSuchPaddingException;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
 
 
 public class Manager {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final boolean LAB = true;
-    private static final String usage = "Usage: bindingName schedulerHost schedulerTCPPort preparationCost [taskDir]";
+    private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private String bindingName;
     private String schedHost;
@@ -49,6 +51,8 @@ public class Manager {
 
     
     public Manager(String bn, String sh, int p){
+        //TODO check lab
+        Security.insertProviderAt(new BouncyCastleProvider(), 2);
         bindingName = bn;
         schedHost = sh;
         prepcosts = p;
@@ -87,7 +91,9 @@ public class Manager {
     
     private void exitRoutineFail(){
         try {
-            schedsock.close();
+            if (schedsock != null) {
+                schedsock.close();
+            }
             Registry r = LocateRegistry.getRegistry(regPort);
             r.unbind(bindingName);
             //logout all users
@@ -162,7 +168,7 @@ public class Manager {
         SecureRandom r = new SecureRandom();
         final byte[] number = new byte[32];
         r.nextBytes(number);
-        String firstmsg = "!login "+number.toString();
+        String firstmsg = "!login "+ new String(number);
         String encrypted = eh.encryptMessage(firstmsg);
         
         //send challenge 
@@ -243,6 +249,10 @@ public class Manager {
                 Set<String> manprops = manpropfile.stringPropertyNames();
                 
                 for(String prop : manprops){
+                    if(prop.contentEquals("scheduler.tcp.port")){
+                        schedTP = Integer.parseInt(manpropfile.getProperty(prop));
+                        //TODO throw
+                    }
                     if(prop.contentEquals("keys.dir")){
                         keydir = manpropfile.getProperty(prop);
                     }
@@ -357,7 +367,7 @@ public class Manager {
         }
         
         try {
-            Manager m = new Manager(args[0], args[1], Integer.parseInt(args[3]));
+            Manager m = new Manager(args[0], args[1], Integer.parseInt(args[2]));
             
             m.readProperties();
             m.inputListen();
