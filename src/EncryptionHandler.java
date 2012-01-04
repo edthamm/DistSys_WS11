@@ -19,7 +19,7 @@ public class EncryptionHandler {
         hmac= Mac.getInstance(Algorithm);
         hmac.init(key);
     }
-    //initialize a cipher with an IV (i.e. AES in our case9
+    //initialize a cipher with an IV (i.e. AES in our case)
     public EncryptionHandler(Key secret, String Algorithm, byte[] IV) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException{
             enccipher = Cipher.getInstance(Algorithm);
             deccipher = Cipher.getInstance(Algorithm);
@@ -76,10 +76,12 @@ public class EncryptionHandler {
         return cipherb64;
     }
     
-    public String decryptMessage(String[] msg){
-        boolean first = true;
+    public String[] debaseMessage(String[] msg) throws Base64DecodingException{
+        for(String s : msg){
+            s = new String(Base64.decode(s));
+        }
         
-        return null;
+        return msg;
     }
     
     
