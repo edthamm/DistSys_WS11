@@ -5,7 +5,9 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -209,11 +211,15 @@ public class Manager {
                 System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+new String(number));
                 exitRoutineFail();
             }
-            //TODO parse out shared AES and IV
+            //parse out shared AES and IV
             byte[] iv = split[4].getBytes();
-            SecretKey aeskey;
+            byte[] encodedsecret = split[3].getBytes();
+            //TODO desirealize key
+            SecretKey aeskey = null;
             
-            //TODO reinitialize eh
+            //reinitialize eh
+            eh = new EncryptionHandler(aeskey,"AES", iv);
+            
             
             schedout.println(eh.encryptMessage(split[2]));
             schedout.flush();
@@ -230,6 +236,15 @@ public class Manager {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (InvalidKeyException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (NoSuchPaddingException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         }
