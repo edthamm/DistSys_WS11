@@ -28,7 +28,9 @@ import java.util.concurrent.*;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
@@ -358,19 +360,27 @@ public class Scheduler extends AbstractServer {
                 
                 
             }
-            return "Unrecognised message send !requestEngine."; //would not do this in production gives away to much info.
+            return "Unrecognised message send !requestEngine or !login."; //would not do this in production gives away to much info.
         }
         
         private boolean performLogin(String [] in) throws IllegalBlockSizeException, BadPaddingException, IOException, Base64DecodingException{
             SecureRandom r = new SecureRandom();
             final byte[] number = new byte[32];
-            final byte[] session = new byte[256];
+            byte[] session = new byte[256];
             final byte[] iv = new byte[16];
             r.nextBytes(number);
-            r.nextBytes(session);
             r.nextBytes(iv);
+            try {
+                KeyGenerator kg = KeyGenerator.getInstance("AES");
+                kg.init(256);
+                SecretKey key = kg.generateKey();
+                session = key.getEncoded();
+            } catch (NoSuchAlgorithmException e) {
+                if(DEBUG){e.printStackTrace();}
+            }
             
-            String returnmsg = "!ok " + in[1] + new String(number) + new String(session)+ new String(iv);
+            
+            String[] returnmsg ={"!ok", in[1], new String(number), new String(session), new String(iv)};
             //TODO we are now fine till here
             out.println(eh.encryptMessage(returnmsg));
             String authentmsg = inreader.readLine();
