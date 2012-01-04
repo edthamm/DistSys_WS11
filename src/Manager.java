@@ -14,6 +14,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -23,6 +24,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
@@ -216,7 +219,10 @@ public class Manager {
             byte[] encodedsecret = split[3].getBytes();
             //TODO desirealize key
             SecretKey aeskey = null;
-            
+            SecretKeySpec sks = new SecretKeySpec(encodedsecret, "AES");   
+            aeskey = SecretKeyFactory.getInstance("AES").generateSecret(sks);
+    
+           
             //reinitialize eh
             eh = new EncryptionHandler(aeskey,"AES", iv);
             
@@ -245,6 +251,9 @@ public class Manager {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         } catch (InvalidAlgorithmParameterException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (InvalidKeySpecException e) {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         }
