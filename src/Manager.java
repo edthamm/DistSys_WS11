@@ -204,7 +204,7 @@ public class Manager {
                         
             String[] split = firstrsp.split(" ");
             if(split[0].contains("!ok")){
-                split = eh.debaseMessage(split);
+                split = eh.debaseAllButFirst(split);
             }
             else{
                 System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");

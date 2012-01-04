@@ -340,11 +340,12 @@ public class Scheduler extends AbstractServer {
  */
         private String processInput(String encrypted, String ip) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException, IOException {
             //TODO set up connection
+            encrypted = encrypted.trim();
             String input = eh.decryptMessage(encrypted);   
             
             String[] in = input.split(" ");
             if(in[0].contentEquals("!login")){
-                if(performLogin(in)){
+                if(performLogin(eh.debaseAllButFirst(in))){
                     return null;
                 }
                 else{
@@ -379,10 +380,10 @@ public class Scheduler extends AbstractServer {
                 if(DEBUG){e.printStackTrace();}
             }
             
-            
             String[] returnmsg ={"!ok", in[1], new String(number), new String(session), new String(iv)};
             //TODO we are now fine till here
             out.println(eh.encryptMessage(returnmsg));
+            out.flush();
             String authentmsg = inreader.readLine();
             String challenge = eh.decryptMessage(authentmsg);
             //TODO check this

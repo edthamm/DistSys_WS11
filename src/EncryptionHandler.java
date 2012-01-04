@@ -76,9 +76,15 @@ public class EncryptionHandler {
         return cipherb64;
     }
     
-    public String[] debaseMessage(String[] msg) throws Base64DecodingException{
+    public String[] debaseAllButFirst(String[] msg) throws Base64DecodingException{
+        boolean first = true;
         for(String s : msg){
-            s = new String(Base64.decode(s));
+            if(first){
+                first = false; 
+            }
+            else{
+                s = new String(Base64.decode(s.getBytes()));
+            }
         }
         
         return msg;
