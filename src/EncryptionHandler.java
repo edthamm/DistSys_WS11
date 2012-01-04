@@ -42,10 +42,10 @@ public class EncryptionHandler {
         return cipherb64;
     }
     
-    public String decryptMessage(String msg) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException{
+    public String decryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException, Base64DecodingException{
         byte[] cipher = Base64.decode(msg);
-        byte[] b64 = deccipher.doFinal(cipher);
-        String clear = new String(Base64.decode(b64));
+        byte[] clearbytes = deccipher.doFinal(cipher);
+        String clear = new String(clearbytes);
         return clear;
     }
     
@@ -74,6 +74,12 @@ public class EncryptionHandler {
         byte[] cipher = enccipher.doFinal(b64.getBytes());
         String cipherb64 = Base64.encode(cipher);
         return cipherb64;
+    }
+    
+    public String decryptMessage(String[] msg){
+        boolean first = true;
+        
+        return null;
     }
     
     
