@@ -18,7 +18,9 @@ import java.util.concurrent.*;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
@@ -172,7 +174,7 @@ public class Manager {
         SecureRandom r = new SecureRandom();
         final byte[] number = new byte[32];
         r.nextBytes(number);
-        String firstmsg = "!login "+ new String(number);
+        String[] firstmsg ={"!login", new String(number)};
         String encrypted;
 
         try {
@@ -187,21 +189,29 @@ public class Manager {
         } catch (BadPaddingException e1) {
             // TODO Auto-generated catch block
             if(DEBUG){e1.printStackTrace();}
-        }
-        
+        }   
 
         
         //get response
         try {
             String firstrspenc = schedin.readLine();
             String firstrsp = eh.decryptMessage(firstrspenc);
-            
+                        
             String[] split = firstrsp.split(" ");
+            if(split[0].contains("!ok")){
+                split = eh.debaseMessage(split);
+            }
+            else{
+                System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");
+                return;
+                }
             if(split[1].getBytes() != number){
                 System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+new String(number));
                 exitRoutineFail();
             }
             //TODO parse out shared AES and IV
+            byte[] iv = split[4].getBytes();
+            SecretKey aeskey;
             
             //TODO reinitialize eh
             
@@ -217,6 +227,9 @@ public class Manager {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         } catch (BadPaddingException e) {
+            // TODO Auto-generated catch block
+            if(DEBUG){e.printStackTrace();}
+        } catch (NoSuchAlgorithmException e) {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         }
