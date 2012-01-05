@@ -50,6 +50,7 @@ public class Scheduler extends AbstractServer {
     private EncryptionHandler eh;
     private PrivateKey schedpriv;
     private PublicKey manpub;
+    @SuppressWarnings("unused")
     private String keydir;
     private String enckeyloc;
     private String deckeyloc;

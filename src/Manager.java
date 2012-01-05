@@ -7,7 +7,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -21,7 +20,6 @@ import java.util.concurrent.*;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -42,6 +40,7 @@ public class Manager {
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private String bindingName;
     private String schedHost;
+    @SuppressWarnings("unused")
     private String keydir;
     private String enckeyloc;
     private String deckeyloc;
