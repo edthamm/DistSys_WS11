@@ -33,6 +33,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
 
@@ -119,7 +120,13 @@ public class Scheduler extends AbstractServer {
         try {
             KeyPair kp = (KeyPair) mysec.readObject();
             schedpriv = kp.getPrivate();
-        } catch (IOException e) {
+        }
+        catch (EncryptionException e){
+            System.out.println("Sorry wrong password. Try Again.");
+            readKeys();
+            return;
+        }
+        catch (IOException e) {
             System.out.println("Error reading from KeyPemMySec. Bailing out.");
             if(DEBUG){e.printStackTrace();}
             exitRoutineFail();
