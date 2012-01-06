@@ -14,6 +14,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -199,8 +200,11 @@ public class Manager {
         
         //get response
         try {
-            String firstrspenc = schedin.readLine();
-            String firstrsp = eh.decryptMessage(firstrspenc);
+            char[] target = new char[2048];
+            String firstrspenc;
+            schedin.read(target);
+            firstrspenc = new String(target);
+            String firstrsp = eh.decryptMessage(firstrspenc.trim());
                         
             String[] split = firstrsp.split(" ");
             if(split[0].contains("!ok")){
@@ -210,7 +214,7 @@ public class Manager {
                 System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");
                 return;
                 }
-            if(split[1].getBytes() != number){
+            if(!Arrays.equals(number,split[1].getBytes())){
                 System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+new String(number));
                 exitRoutineFail();
             }

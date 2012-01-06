@@ -20,6 +20,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.Timer;
@@ -392,10 +393,13 @@ public class Scheduler extends AbstractServer {
             //TODO we are now fine till here
             out.println(eh.encryptMessage(returnmsg));
             out.flush();
-            String authentmsg = inreader.readLine();
-            String challenge = eh.decryptMessage(authentmsg);
+            char[] target = new char[2048];
+            String authentmsg;
+            inreader.read(target);
+            authentmsg = new String(target);
+            String challenge = eh.decryptMessage(authentmsg.trim());
             //TODO check this
-            if(challenge.getBytes() == number){
+            if(!Arrays.equals(number,challenge.getBytes())){
                 return true;
             }
             return false;
