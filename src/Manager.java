@@ -224,11 +224,11 @@ public class Manager {
             //TODO desirealize key
             SecretKey aeskey = null;
             SecretKeySpec sks = new SecretKeySpec(encodedsecret, "AES");   
-            aeskey = SecretKeyFactory.getInstance("AES").generateSecret(sks);
+            //aeskey = SecretKeyFactory.getInstance("AES").generateSecret(sks);
     
            
             //reinitialize eh
-            eh = new EncryptionHandler(aeskey,"AES", iv);
+            eh = new EncryptionHandler(sks,"AES", iv);
             
             
             schedout.println(eh.encryptMessage(split[2]));
@@ -255,9 +255,6 @@ public class Manager {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         } catch (InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            if(DEBUG){e.printStackTrace();}
-        } catch (InvalidKeySpecException e) {
             // TODO Auto-generated catch block
             if(DEBUG){e.printStackTrace();}
         }
