@@ -13,7 +13,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Set;
@@ -22,8 +21,6 @@ import java.util.concurrent.*;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -222,9 +219,7 @@ public class Manager {
             byte[] iv = split[4].getBytes();
             byte[] encodedsecret = split[3].getBytes();
             //TODO desirealize key
-            SecretKey aeskey = null;
             SecretKeySpec sks = new SecretKeySpec(encodedsecret, "AES");   
-            //aeskey = SecretKeyFactory.getInstance("AES").generateSecret(sks);
     
            
             //reinitialize eh
