@@ -261,13 +261,13 @@ public class RComp implements Companyable{
                                 e.printStackTrace();
                             }
                         } catch (IllegalBlockSizeException e) {
-                            // TODO Auto-generated catch block
+                            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                             if(DEBUG){e.printStackTrace();}
                         } catch (BadPaddingException e) {
-                            // TODO Auto-generated catch block
+                            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                             if(DEBUG){e.printStackTrace();}
                         } catch (Base64DecodingException e) {
-                            // TODO Auto-generated catch block
+                            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                             if(DEBUG){e.printStackTrace();}
                         }
                     }

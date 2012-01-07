@@ -187,10 +187,10 @@ public class Manager {
             schedout.print(encrypted);
             schedout.flush();
         } catch (IllegalBlockSizeException e1) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e1.toString()+" exception.");
             if(DEBUG){e1.printStackTrace();}
         } catch (BadPaddingException e1) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e1.toString()+" exception.");
             if(DEBUG){e1.printStackTrace();}
         }   
 
@@ -219,7 +219,6 @@ public class Manager {
             //parse out shared AES and IV
             byte[] iv = split[4].getBytes();
             byte[] encodedsecret = split[3].getBytes();
-            //TODO desirealize key
             SecretKeySpec sks = new SecretKeySpec(encodedsecret, "AES");   
     
            
@@ -233,25 +232,25 @@ public class Manager {
         } catch (IOException e) {
             if(DEBUG){e.printStackTrace();}
         } catch (Base64DecodingException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (IllegalBlockSizeException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (BadPaddingException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (NoSuchPaddingException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         }
     }

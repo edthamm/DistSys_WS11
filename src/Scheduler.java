@@ -335,13 +335,13 @@ public class Scheduler extends AbstractServer {
             catch(IOException e){
                 if(DEBUG){e.printStackTrace();}
             } catch (Base64DecodingException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             } catch (IllegalBlockSizeException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             } catch (BadPaddingException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             }
         }
@@ -399,16 +399,16 @@ public class Scheduler extends AbstractServer {
             try {
                 ceh = new EncryptionHandler(key, "AES", iv);
             } catch (InvalidKeyException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             } catch (NoSuchAlgorithmException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             } catch (NoSuchPaddingException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             } catch (InvalidAlgorithmParameterException e) {
-                // TODO Auto-generated catch block
+                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             }
             
