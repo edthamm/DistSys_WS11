@@ -507,8 +507,9 @@ public class Manager {
                     if(u instanceof Admin){
                         return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
-                    //TODO hand down the correct eh
-                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m, prepcosts, eh), 0);
+                    //TODO hand down the correct verification handler
+                    EncryptionHandler vh = null;
+                    Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m, prepcosts, eh, vh), 0);
                     return retval;
                 }
             }
