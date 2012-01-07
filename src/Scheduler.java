@@ -416,8 +416,9 @@ public class Scheduler extends AbstractServer {
             inreader.read(target);
             authentmsg = new String(target);
             authentmsg = authentmsg.trim();
-            String challenge = ceh.decryptMessage(authentmsg);
-            
+            String challengeb64 = ceh.decryptMessage(authentmsg);
+            String challenge = ceh.debaseMassage(challengeb64);
+            //TODO review return values I think it has to be the other way round
             if(!Arrays.equals(number,challenge.getBytes())){
                 return true;
             }

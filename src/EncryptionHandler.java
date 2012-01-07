@@ -81,6 +81,10 @@ public class EncryptionHandler {
         return msg;
     }
     
+    public String debaseMassage(String msg) throws Base64DecodingException{
+        String ret = new String(Base64.decode(msg));
+        return ret;
+    }
     
     public byte[] generateIntegrityCheck(byte[] msg){
         hmac.update(msg);
