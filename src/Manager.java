@@ -27,6 +27,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.util.encoders.Hex;
 
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
@@ -39,7 +40,6 @@ public class Manager {
     private static final String AESSPEC = "AES/CTR/NoPadding";
     private String bindingName;
     private String schedHost;
-    @SuppressWarnings("unused")
     private String keydir;
     private String enckeyloc;
     private String deckeyloc;
@@ -509,6 +509,20 @@ public class Manager {
                     }
                     //TODO hand down the correct verification handler
                     EncryptionHandler vh = null;
+                    try{
+                        byte[] keybytes = new byte[1024];
+                        String path = keydir+File.separatorChar+u.name+".key";
+                        FileInputStream fis = new FileInputStream(path);
+                        fis.read(keybytes);
+                        fis.close();
+                        byte[] input = Hex.decode(keybytes);
+                        java.security.Key key = new SecretKeySpec(input, "HmacSHA256");
+                        vh = new EncryptionHandler(key,"HmacSHA256");
+                    }
+                    catch(Exception e){
+                        vh = null;
+                        if(DEBUG){e.printStackTrace();}
+                    }
                     if(vh == null){
                         cb.sendMessage("Can not localize your verification key. please disable verification.(feature to be implemented)");
                     }
