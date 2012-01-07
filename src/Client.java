@@ -30,7 +30,7 @@ public class Client implements Callbackable{
     private EncryptionHandler vh = null; 
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final boolean LAB = true;
     private Callbackable cb;
     private Adminable admin = null;
@@ -116,7 +116,7 @@ public class Client implements Callbackable{
     private void initializeHandler(String user){
         try {
             byte[] keybytes = new byte[1024];
-            String path = keydir+File.pathSeparator+user+".key";
+            String path = keydir+File.separatorChar+user+".key";
             FileInputStream fis = new FileInputStream(path);
             fis.read(keybytes);
             fis.close();

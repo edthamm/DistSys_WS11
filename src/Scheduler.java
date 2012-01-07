@@ -314,16 +314,27 @@ public class Scheduler extends AbstractServer {
             try{
                 out = new PrintWriter(Csock.getOutputStream());
                 inreader = new BufferedReader(new InputStreamReader(Csock.getInputStream()));
-                
                 String input, output;
                 char[] target = new char[2048];
                 while((inreader.read(target)) != -1){
                     input = new String(target);
-                    output = processInput(input,Csock.getInetAddress().toString().substring(1));
-                    if (output != null) {
-                        String encryptedoutput = ceh.encryptMessage(output);
-                        out.println(encryptedoutput);
-                        out.flush();
+                    target = new char[2048];
+                    try {
+                        output = processInput(input,Csock.getInetAddress().toString().substring(1));
+                        if (output != null) {
+                            String encryptedoutput = ceh.encryptMessage(output);
+                            out.println(encryptedoutput);
+                            out.flush();
+                        }
+                    } catch (Base64DecodingException e) {
+                        System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
+                        if(DEBUG){e.printStackTrace();}
+                    } catch (IllegalBlockSizeException e) {
+                        System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
+                        if(DEBUG){e.printStackTrace();}
+                    } catch (BadPaddingException e) {
+                        System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
+                        if(DEBUG){e.printStackTrace();}
                     }
                 }
                 inreader.close();
@@ -332,15 +343,6 @@ public class Scheduler extends AbstractServer {
                 return;
             }
             catch(IOException e){
-                if(DEBUG){e.printStackTrace();}
-            } catch (Base64DecodingException e) {
-                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
-                if(DEBUG){e.printStackTrace();}
-            } catch (IllegalBlockSizeException e) {
-                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
-                if(DEBUG){e.printStackTrace();}
-            } catch (BadPaddingException e) {
-                System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}
             }
         }
@@ -362,6 +364,7 @@ public class Scheduler extends AbstractServer {
                     return "Login unsuccessfull";
                 }
             }
+            ceh.debaseMassage(input);
             if(in[0].contentEquals("!requestEngine")){
                 GTEntry g = schedule(in[2]);
                 if(g == null){

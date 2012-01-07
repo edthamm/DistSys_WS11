@@ -240,7 +240,8 @@ public class RComp implements Companyable{
                             schedin.read(target);
                             encrcv = new String(target);
                             encrcv = encrcv.trim();
-                            String rcv = eh.decryptMessage(encrcv);
+                            String rcvb64 = eh.decryptMessage(encrcv);
+                            String rcv = eh.debaseMassage(rcvb64);
                             
                             if (rcv.contains("Assigned engine:")) {
                                 String rs[] = rcv.split(" ");
@@ -267,7 +268,6 @@ public class RComp implements Companyable{
                             System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                             if(DEBUG){e.printStackTrace();}
                         } catch (Base64DecodingException e) {
-                            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                             if(DEBUG){e.printStackTrace();}
                         }
                     }
