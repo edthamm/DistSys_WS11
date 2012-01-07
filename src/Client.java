@@ -27,7 +27,7 @@ public class Client implements Callbackable{
     private int port;
     private String sname;
     private String keydir;
-    private EncryptionHandler ehandler = null; 
+    private EncryptionHandler vh = null; 
     private File tdir;
     private ExecutorService e = Executors.newCachedThreadPool();
     private static final boolean DEBUG = false;
@@ -123,7 +123,7 @@ public class Client implements Callbackable{
             byte[] input = Hex.decode(keybytes);
             java.security.Key key = new SecretKeySpec(input, "HmacSHA256");
             
-            ehandler = new EncryptionHandler(key,"HmacSHA256");
+            vh = new EncryptionHandler(key,"HmacSHA256");
             
         } catch (InvalidKeyException e) {
             System.out.println("Sorry there is something wrong with your key pleas check that. You will not be able to recieve verifyed Output.");
@@ -164,12 +164,12 @@ public class Client implements Callbackable{
     }
     
     public void handleResult(String msg, byte[] hash) throws RemoteException {
-        if(ehandler == null){
+        if(vh == null){
             System.out.println("Caution this output is UNVERIFYED.");
             System.out.println(msg);
             System.out.println("Caution this output is UNVERIFYED.");
         }
-        if(ehandler.checkIntegrity(msg, hash)){
+        if(vh.checkIntegrity(msg, hash)){
             System.out.println("Integrity Check OK. Printing Result:");
             System.out.println(msg);
         }
@@ -394,8 +394,8 @@ public class Client implements Callbackable{
      * Postconditions: logged out
      */
     private void logout() throws RemoteException{
-        if(ehandler != null){
-            ehandler = null;
+        if(vh != null){
+            vh = null;
         }
         if(admin != null){
             admin.logout();
