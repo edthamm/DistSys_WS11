@@ -103,7 +103,7 @@ public class RComp implements Companyable{
                     }                                       
                     if (T.status == TASKSTATE.finished) {
                         if (me.callback != null) {
-                            byte[] hash = eh.generateIntegrityCheck(T.output.getBytes());
+                            byte[] hash = vh.generateIntegrityCheck(T.output.getBytes());
                             cb.handleResult(T.output, hash);
                         }
                         return;
@@ -226,7 +226,7 @@ public class RComp implements Companyable{
                     me = u;
 
                 }
-                //TODO encrypt all messages
+                
                 public void run() {
                     if (m.status == TASKSTATE.prepared) {
                         try {
