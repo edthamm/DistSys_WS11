@@ -234,8 +234,6 @@ public class RComp implements Companyable{
                             String encrm = eh.encryptMessage(requestmsg);
                             schedout.println(encrm);
 
-                            //String rcv = schedin.readLine();
-                            
                             char[] target = new char[2048];
                             String encrcv;
                             schedin.read(target);
