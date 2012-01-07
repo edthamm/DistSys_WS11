@@ -358,10 +358,11 @@ public class Scheduler extends AbstractServer {
             if(in[0].contentEquals("!login")){
                 if(performLogin(ceh.debaseAllButFirst(in))){
                     if(DEBUG){System.out.println("manager logged in successfully");}
-                    return "Login successfull";
+                    return null;
                 }
                 else{
-                    return "Login unsuccessfull";
+                    //TODO maybe terminate connection or something to tell man that something is wrong
+                    return null;
                 }
             }
             ceh.debaseMassage(input);
