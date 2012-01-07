@@ -317,7 +317,6 @@ public class Scheduler extends AbstractServer {
                 
                 String input, output;
                 char[] target = new char[2048];
-                //TODO find suited reading method
                 while((inreader.read(target)) != -1){
                     input = new String(target);
                     output = processInput(input,Csock.getInetAddress().toString().substring(1));
@@ -350,7 +349,6 @@ public class Scheduler extends AbstractServer {
  *  Postconditions:
  */
         private String processInput(String encrypted, String ip) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException, IOException {
-            //TODO set up connection
             encrypted = encrypted.trim();
             String input = ceh.decryptMessage(encrypted);   
             
@@ -419,7 +417,6 @@ public class Scheduler extends AbstractServer {
             authentmsg = authentmsg.trim();
             String challengeb64 = ceh.decryptMessage(authentmsg);
             String challenge = ceh.debaseMassage(challengeb64);
-            //TODO review return values I think it has to be the other way round
             if(!Arrays.equals(number,challenge.getBytes())){
                 return false;
             }

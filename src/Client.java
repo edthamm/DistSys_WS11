@@ -221,7 +221,7 @@ public class Client implements Callbackable{
                 return false;
             }
             Comunicatable b = login(in[1],in[2]);
-            if (b != null) {//TODO see if this will give me trouble
+            if (b != null) {
                 if (b instanceof Adminable) {
                     admin = (Adminable) b;
                 } else {
@@ -517,7 +517,7 @@ public class Client implements Callbackable{
     private void exit(){
         System.out.print("Exiting on request. Good Bye!\n");
         try {
-            if(loggedIn()){//TODO Maybe swallow output
+            if(loggedIn()){
                 logout();
             }
             UnicastRemoteObject.unexportObject(this, true);
