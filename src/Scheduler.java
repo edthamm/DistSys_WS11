@@ -13,6 +13,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -305,6 +306,7 @@ public class Scheduler extends AbstractServer {
     private class Worker extends AbstractServer.Worker{
         PrintWriter out;
         BufferedReader inreader;
+        EncryptionHandler ceh = eh;
         public Worker(Socket s) {
             super(s);
         }
@@ -320,7 +322,7 @@ public class Scheduler extends AbstractServer {
                     input = new String(target);
                     output = processInput(input,Csock.getInetAddress().toString().substring(1));
                     if (output != null) {
-                        String encryptedoutput = eh.encryptMessage(output);
+                        String encryptedoutput = ceh.encryptMessage(output);
                         out.println(encryptedoutput);
                         out.flush();
                     }
@@ -350,12 +352,12 @@ public class Scheduler extends AbstractServer {
         private String processInput(String encrypted, String ip) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException, IOException {
             //TODO set up connection
             encrypted = encrypted.trim();
-            String input = eh.decryptMessage(encrypted);   
+            String input = ceh.decryptMessage(encrypted);   
             
             String[] in = input.split(" ");
             if(in[0].contentEquals("!login")){
-                if(performLogin(eh.debaseAllButFirst(in))){
-                    return null;
+                if(performLogin(ceh.debaseAllButFirst(in))){
+                    return "Login successfull";
                 }
                 else{
                     return "Login unsuccessfull";
@@ -376,29 +378,46 @@ public class Scheduler extends AbstractServer {
         private boolean performLogin(String [] in) throws IllegalBlockSizeException, BadPaddingException, IOException, Base64DecodingException{
             SecureRandom r = new SecureRandom();
             final byte[] number = new byte[32];
-            byte[] session = new byte[256];
+            SecretKey key = null;
             final byte[] iv = new byte[16];
             r.nextBytes(number);
             r.nextBytes(iv);
             try {
                 KeyGenerator kg = KeyGenerator.getInstance("AES");
                 kg.init(256);
-                SecretKey key = kg.generateKey();
-                session = key.getEncoded();
+                key = kg.generateKey();
             } catch (NoSuchAlgorithmException e) {
                 if(DEBUG){e.printStackTrace();}
             }
             
-            String[] returnmsg ={"!ok", in[1], new String(number), new String(session), new String(iv)};
-            //TODO we are now fine till here
-            out.println(eh.encryptMessage(returnmsg));
+            String[] returnmsg ={"!ok", in[1], new String(number), new String(key.getEncoded()), new String(iv)};
+            out.println(ceh.encryptMessage(returnmsg));
             out.flush();
+            
+            // reinitialize connection specific eh
+            try {
+                ceh = new EncryptionHandler(key, "AES", iv);
+            } catch (InvalidKeyException e) {
+                // TODO Auto-generated catch block
+                if(DEBUG){e.printStackTrace();}
+            } catch (NoSuchAlgorithmException e) {
+                // TODO Auto-generated catch block
+                if(DEBUG){e.printStackTrace();}
+            } catch (NoSuchPaddingException e) {
+                // TODO Auto-generated catch block
+                if(DEBUG){e.printStackTrace();}
+            } catch (InvalidAlgorithmParameterException e) {
+                // TODO Auto-generated catch block
+                if(DEBUG){e.printStackTrace();}
+            }
+            
             char[] target = new char[2048];
             String authentmsg;
             inreader.read(target);
             authentmsg = new String(target);
-            String challenge = eh.decryptMessage(authentmsg.trim());
-            //TODO check this
+            authentmsg = authentmsg.trim();
+            String challenge = ceh.decryptMessage(authentmsg);
+            
             if(!Arrays.equals(number,challenge.getBytes())){
                 return true;
             }
