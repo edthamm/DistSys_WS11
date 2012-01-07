@@ -12,6 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+
 public class RComp implements Companyable{
         private String name ="";
         private User me;
@@ -225,10 +230,19 @@ public class RComp implements Companyable{
                 public void run() {
                     if (m.status == TASKSTATE.prepared) {
                         try {
+                            String requestmsg = "!requestEngine " + m.id + " "+ m.ttype.toString();
+                            String encrm = eh.encryptMessage(requestmsg);
+                            schedout.println(encrm);
 
-                            schedout.println("!requestEngine " + m.id + " "+ m.ttype.toString());
-
-                            String rcv = schedin.readLine();
+                            //String rcv = schedin.readLine();
+                            
+                            char[] target = new char[2048];
+                            String encrcv;
+                            schedin.read(target);
+                            encrcv = new String(target);
+                            encrcv = encrcv.trim();
+                            String rcv = eh.decryptMessage(encrcv);
+                            
                             if (rcv.contains("Assigned engine:")) {
                                 String rs[] = rcv.split(" ");
                                 System.out.print(rs[6] + "\n");
@@ -247,6 +261,15 @@ public class RComp implements Companyable{
                             if (DEBUG) {
                                 e.printStackTrace();
                             }
+                        } catch (IllegalBlockSizeException e) {
+                            // TODO Auto-generated catch block
+                            if(DEBUG){e.printStackTrace();}
+                        } catch (BadPaddingException e) {
+                            // TODO Auto-generated catch block
+                            if(DEBUG){e.printStackTrace();}
+                        } catch (Base64DecodingException e) {
+                            // TODO Auto-generated catch block
+                            if(DEBUG){e.printStackTrace();}
                         }
                     }
                     
