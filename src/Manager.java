@@ -212,8 +212,9 @@ public class Manager {
                 return;
                 }
             if(!Arrays.equals(number,split[1].getBytes())){
-                System.out.println("Scheduler retuned wrong Challenge:\n is: "+split[1]+"\n should be: "+new String(number));
+                System.out.println("Scheduler retuned wrong Challenge:\n is       : "+split[1]+"\n should be: "+new String(number));
                 exitRoutineFail();
+                return;
             }
             //parse out shared AES and IV
             byte[] iv = split[4].getBytes();
