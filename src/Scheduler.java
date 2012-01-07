@@ -357,6 +357,7 @@ public class Scheduler extends AbstractServer {
             String[] in = input.split(" ");
             if(in[0].contentEquals("!login")){
                 if(performLogin(ceh.debaseAllButFirst(in))){
+                    if(DEBUG){System.out.println("manager logged in successfully");}
                     return "Login successfull";
                 }
                 else{
@@ -420,9 +421,9 @@ public class Scheduler extends AbstractServer {
             String challenge = ceh.debaseMassage(challengeb64);
             //TODO review return values I think it has to be the other way round
             if(!Arrays.equals(number,challenge.getBytes())){
-                return true;
+                return false;
             }
-            return false;
+            return true;
         }
         
     }

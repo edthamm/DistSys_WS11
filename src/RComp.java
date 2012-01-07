@@ -233,7 +233,8 @@ public class RComp implements Companyable{
                             String requestmsg = "!requestEngine " + m.id + " "+ m.ttype.toString();
                             String encrm = eh.encryptMessage(requestmsg);
                             schedout.println(encrm);
-
+                            schedout.flush();
+                            
                             char[] target = new char[2048];
                             String encrcv;
                             schedin.read(target);
