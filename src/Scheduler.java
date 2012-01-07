@@ -57,6 +57,7 @@ public class Scheduler extends AbstractServer {
     private String enckeyloc;
     private String deckeyloc;
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
+    private static final String AESSPEC = "AES/CTR/NoPadding";
     private static final int BUFSIZE = 1024;
     private static final int MAXCOEF = 1024;
     private Timer etime;
@@ -365,7 +366,8 @@ public class Scheduler extends AbstractServer {
                     return null;
                 }
             }
-            ceh.debaseMassage(input);
+            input = ceh.debaseMassage(input);
+            in = input.split(" ");
             if(in[0].contentEquals("!requestEngine")){
                 GTEntry g = schedule(in[2]);
                 if(g == null){
@@ -399,7 +401,7 @@ public class Scheduler extends AbstractServer {
             
             // reinitialize connection specific eh
             try {
-                ceh = new EncryptionHandler(key, "AES", iv);
+                ceh = new EncryptionHandler(key, AESSPEC, iv);
             } catch (InvalidKeyException e) {
                 System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                 if(DEBUG){e.printStackTrace();}

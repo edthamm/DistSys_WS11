@@ -36,6 +36,7 @@ public class Manager {
     private static final boolean LAB = true;
     private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
+    private static final String AESSPEC = "AES/CTR/NoPadding";
     private String bindingName;
     private String schedHost;
     @SuppressWarnings("unused")
@@ -219,11 +220,11 @@ public class Manager {
             //parse out shared AES and IV
             byte[] iv = split[4].getBytes();
             byte[] encodedsecret = split[3].getBytes();
-            SecretKeySpec sks = new SecretKeySpec(encodedsecret, "AES");   
+            SecretKeySpec sks = new SecretKeySpec(encodedsecret, AESSPEC);   
     
            
             //reinitialize eh
-            eh = new EncryptionHandler(sks,"AES", iv);
+            eh = new EncryptionHandler(sks,AESSPEC, iv);
             
             
             schedout.println(eh.encryptMessage(split[2]));
@@ -508,6 +509,9 @@ public class Manager {
                     }
                     //TODO hand down the correct verification handler
                     EncryptionHandler vh = null;
+                    if(vh == null){
+                        cb.sendMessage("Can not localize your verification key. please disable verification.(feature to be implemented)");
+                    }
                     Comunicatable retval =(Comunicatable) UnicastRemoteObject.exportObject(new RComp(uname,u,Tasks, Prices, schedin, schedout,m, prepcosts, eh, vh), 0);
                     return retval;
                 }
