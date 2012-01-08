@@ -66,10 +66,11 @@ public class Scheduler extends AbstractServer {
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     private static final boolean DEBUG = true;
+    private static final boolean LAB = true;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
         //TODO check Lab
-        Security.insertProviderAt(new BouncyCastleProvider(), 1);
+        if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}
         uPort = udpPort;
         minT = min;
         maxT = max;

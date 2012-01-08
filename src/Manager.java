@@ -61,7 +61,7 @@ public class Manager {
     
     public Manager(String bn, String sh, int p){
         //TODO check lab
-        Security.insertProviderAt(new BouncyCastleProvider(), 1);
+        if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}
         bindingName = bn;
         schedHost = sh;
         prepcosts = p;
@@ -127,11 +127,6 @@ public class Manager {
     }
     
     private void setupRMI(){
-        if(!LAB){
-            if (System.getSecurityManager() == null) {
-                System.setSecurityManager(new SecurityManager());
-            }
-        }
         
         try {
             Loginable l = (Loginable) UnicastRemoteObject.exportObject(LHandler, 0);
