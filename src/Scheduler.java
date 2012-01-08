@@ -39,7 +39,6 @@ import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
 
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 
 public class Scheduler extends AbstractServer {
@@ -327,9 +326,6 @@ public class Scheduler extends AbstractServer {
                             out.println(encryptedoutput);
                             out.flush();
                         }
-                    } catch (Base64DecodingException e) {
-                        System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
-                        if(DEBUG){e.printStackTrace();}
                     } catch (IllegalBlockSizeException e) {
                         System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
                         if(DEBUG){e.printStackTrace();}
@@ -351,7 +347,7 @@ public class Scheduler extends AbstractServer {
  *  Preconditions: Client ensures that in !requestEngine only HIGH,MIDDLE,LOW are allowed on in[2], Companies not null
  *  Postconditions:
  */
-        private String processInput(String encrypted, String ip) throws Base64DecodingException, IllegalBlockSizeException, BadPaddingException, IOException {
+        private String processInput(String encrypted, String ip) throws IllegalBlockSizeException, BadPaddingException, IOException {
             encrypted = encrypted.trim();
             String input = ceh.decryptMessage(encrypted);   
             
@@ -380,7 +376,7 @@ public class Scheduler extends AbstractServer {
             return "Unrecognised message send !requestEngine or !login."; //would not do this in production gives away to much info.
         }
         
-        private boolean performLogin(String [] in) throws IllegalBlockSizeException, BadPaddingException, IOException, Base64DecodingException{
+        private boolean performLogin(String [] in) throws IllegalBlockSizeException, BadPaddingException, IOException{
             SecureRandom r = new SecureRandom();
             final byte[] number = new byte[32];
             SecretKey key = null;

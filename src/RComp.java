@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 public class RComp implements Companyable{
         private String name ="";
@@ -266,8 +265,6 @@ public class RComp implements Companyable{
                             if(DEBUG){e.printStackTrace();}
                         } catch (BadPaddingException e) {
                             System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
-                            if(DEBUG){e.printStackTrace();}
-                        } catch (Base64DecodingException e) {
                             if(DEBUG){e.printStackTrace();}
                         }
                     }

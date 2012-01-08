@@ -3,8 +3,7 @@ import java.security.*;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-import com.sun.org.apache.xml.internal.security.utils.Base64;
+import org.bouncycastle.util.encoders.Base64;
 
 public class EncryptionHandler {
 
@@ -37,13 +36,13 @@ public class EncryptionHandler {
     
     public String encryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException{
         //TODO rethink inner base 64 
-        String b64 = Base64.encode(msg.getBytes());
-        byte[] cipher = enccipher.doFinal(b64.getBytes());
-        String cipherb64 = Base64.encode(cipher);
+        byte[] b64 = Base64.encode(msg.getBytes());
+        byte[] cipher = enccipher.doFinal(b64);
+        String cipherb64 = new String(Base64.encode(cipher));
         return cipherb64;
     }
     
-    public String decryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException, Base64DecodingException{
+    public String decryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException{
         byte[] cipher = Base64.decode(msg);
         byte[] clearbytes = deccipher.doFinal(cipher);
         String clear = new String(clearbytes);
@@ -56,7 +55,7 @@ public class EncryptionHandler {
         
         int length = msg.length;
         for(int s = 1; s< length; s++){
-            msg[s] = Base64.encode(msg[s].getBytes());
+            msg[s] = new String(Base64.encode(msg[s].getBytes()));
         }
         //concat it in to one string
         String b64 = msg[0];
@@ -69,11 +68,11 @@ public class EncryptionHandler {
             }
         }
         byte[] cipher = enccipher.doFinal(b64.getBytes());
-        String cipherb64 = Base64.encode(cipher);
+        String cipherb64 = new String(Base64.encode(cipher));
         return cipherb64;
     }
     
-    public String[] debaseAllButFirst(String[] msg) throws Base64DecodingException{
+    public String[] debaseAllButFirst(String[] msg){
         int length = msg.length;
         for(int s = 1; s < length ; s++){
                 msg[s] = new String(Base64.decode(msg[s].getBytes()));
@@ -82,7 +81,7 @@ public class EncryptionHandler {
         return msg;
     }
     
-    public String debaseMassage(String msg) throws Base64DecodingException{
+    public String debaseMassage(String msg){
         String ret = new String(Base64.decode(msg));
         return ret;
     }

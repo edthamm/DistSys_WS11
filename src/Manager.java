@@ -29,7 +29,6 @@ import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
 import org.bouncycastle.util.encoders.Hex;
 
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 
 public class Manager {
@@ -231,9 +230,6 @@ public class Manager {
             schedout.flush();
             
         } catch (IOException e) {
-            if(DEBUG){e.printStackTrace();}
-        } catch (Base64DecodingException e) {
-            System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
             if(DEBUG){e.printStackTrace();}
         } catch (IllegalBlockSizeException e) {
             System.out.println("Sorry something went wrong got an " +e.toString()+" exception.");
