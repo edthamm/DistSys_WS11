@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -13,7 +14,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -33,7 +33,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class Manager {
     private static final boolean DEBUG = true;
-    private static final boolean LAB = true;
+    private static final boolean LAB = false;
     private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private static final String AESSPEC = "AES/CTR/NoPadding";
@@ -60,7 +60,6 @@ public class Manager {
 
     
     public Manager(String bn, String sh, int p){
-        //TODO check lab
         if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}
         bindingName = bn;
         schedHost = sh;
@@ -206,7 +205,9 @@ public class Manager {
                 System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");
                 return;
                 }
-            if(!Arrays.equals(number,split[1].getBytes())){
+            
+            //if(!Arrays.equals(number,split[1].getBytes())){
+            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(split[1].getBytes()))!=0){
                 System.out.println("Scheduler retuned wrong Challenge:\n is       : "+split[1]+"\n should be: "+new String(number));
                 exitRoutineFail();
                 return;
@@ -498,7 +499,6 @@ public class Manager {
                     if(u instanceof Admin){
                         return (Comunicatable) UnicastRemoteObject.exportObject(new RAdmin(uname, Users, Prices), 0);
                     }
-                    //TODO hand down the correct verification handler
                     EncryptionHandler vh = null;
                     try{
                         byte[] keybytes = new byte[1024];

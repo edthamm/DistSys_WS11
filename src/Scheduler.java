@@ -13,6 +13,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -21,7 +22,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.Timer;
@@ -66,10 +66,9 @@ public class Scheduler extends AbstractServer {
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     private static final boolean DEBUG = true;
-    private static final boolean LAB = true;
+    private static final boolean LAB = false;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
-        //TODO check Lab
         if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}
         uPort = udpPort;
         minT = min;
@@ -278,7 +277,6 @@ public class Scheduler extends AbstractServer {
         }
         
         try {
-            //TODO check arguments
             Scheduler sched = new Scheduler(Integer.parseInt(args[0]),Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]));
             
             sched.setupEH();
@@ -419,8 +417,9 @@ public class Scheduler extends AbstractServer {
             authentmsg = new String(target);
             authentmsg = authentmsg.trim();
             String challengeb64 = ceh.decryptMessage(authentmsg);
+            //FIXME this fails most of the time but I cant figure out why
             String challenge = ceh.debaseMassage(challengeb64);
-            if(!Arrays.equals(number,challenge.getBytes())){
+            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(challenge.getBytes())) != 0){
                 return false;
             }
             return true;
