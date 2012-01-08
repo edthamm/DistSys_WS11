@@ -61,7 +61,7 @@ public class Scheduler extends AbstractServer {
     private static final int MAXCOEF = 1024;
     private Timer etime;
     private DatagramSocket uSock = null;
-    private final static String usage = "Usage: Scheduler tcpPort udpPort min max tomeout checkPeriod\n";
+    private final static String usage = "Usage: Scheduler udpPort min max timeout checkPeriod\n";
     private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
@@ -271,7 +271,7 @@ public class Scheduler extends AbstractServer {
     
     public static void main(String[] args) {
         
-        if(args.length != 6){
+        if(args.length != 5){
             System.out.print(usage);
             System.exit(1);
         }
