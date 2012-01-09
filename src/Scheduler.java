@@ -38,6 +38,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.util.encoders.Base64;
 
 
 
@@ -66,7 +67,7 @@ public class Scheduler extends AbstractServer {
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     private static final boolean DEBUG = true;
-    private static final boolean LAB = false;
+    private static final boolean LAB = true;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
         if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}
@@ -352,7 +353,7 @@ public class Scheduler extends AbstractServer {
             
             String[] in = input.split(" ");
             if(in[0].contentEquals("!login")){
-                if(performLogin(ceh.debaseAllButFirst(in))){
+                if(performLogin(in)){
                     if(DEBUG){System.out.println("manager logged in successfully");}
                     return null;
                 }
@@ -390,7 +391,8 @@ public class Scheduler extends AbstractServer {
                 if(DEBUG){e.printStackTrace();}
             }
             
-            String[] returnmsg ={"!ok", in[1], new String(number), new String(key.getEncoded()), new String(iv)};
+            String[] returnmsg ={"!ok", in[1], new String(Base64.encode(number)), new String(Base64.encode(key.getEncoded())), new String(Base64.encode(iv))};
+            System.out.println(returnmsg[4]);
             out.println(ceh.encryptMessage(returnmsg));
             out.flush();
             

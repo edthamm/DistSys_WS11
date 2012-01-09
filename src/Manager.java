@@ -27,13 +27,14 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 
 
 
 public class Manager {
     private static final boolean DEBUG = true;
-    private static final boolean LAB = false;
+    private static final boolean LAB = true;
     private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private static final String AESSPEC = "AES/CTR/NoPadding";
@@ -170,8 +171,9 @@ public class Manager {
         //generate secrandom for challenge
         SecureRandom r = new SecureRandom();
         final byte[] number = new byte[32];
+        //TODO Test
         r.nextBytes(number);
-        String[] firstmsg ={"!login", new String(number)};
+        String[] firstmsg ={"!login", new String(Base64.encode(number))};
         String encrypted;
 
         try {
@@ -199,7 +201,8 @@ public class Manager {
                         
             String[] split = firstrsp.split(" ");
             if(split[0].contains("!ok")){
-                split = eh.debaseAllButFirst(split);
+            	//TODO this will not work due to encoding issues new with b64
+                //split = eh.debaseAllButFirst(split);
             }
             else{
                 System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");
@@ -207,14 +210,14 @@ public class Manager {
                 }
             
             //if(!Arrays.equals(number,split[1].getBytes())){
-            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(split[1].getBytes()))!=0){
-                System.out.println("Scheduler retuned wrong Challenge:\n is       : "+split[1]+"\n should be: "+new String(number));
+            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(split[1])))!=0){
+                System.out.println("Scheduler retuned wrong Challenge:\n is       : "+new String(Base64.decode(split[1]))+"\n should be: "+new String(number));
                 exitRoutineFail();
                 return;
             }
             //parse out shared AES and IV
-            byte[] iv = split[4].getBytes();
-            byte[] encodedsecret = split[3].getBytes();
+            byte[] iv = Base64.decode(split[4]);
+            byte[] encodedsecret = Base64.decode(split[3]);
             SecretKeySpec sks = new SecretKeySpec(encodedsecret, AESSPEC);   
     
            

@@ -11,6 +11,7 @@ public class EncryptionHandler {
     private Mac hmac;
     private Cipher enccipher;
     private Cipher deccipher;
+    final String B64 = "a-zA-Z0-9/+";
     
     //Initialize a msg verifyer
     public EncryptionHandler(Key secret, String Algorithm) throws NoSuchAlgorithmException, InvalidKeyException{
@@ -55,7 +56,10 @@ public class EncryptionHandler {
         
         int length = msg.length;
         for(int s = 1; s< length; s++){
-            msg[s] = new String(Base64.encode(msg[s].getBytes()));
+        	//wenn der string noch nicht b64 ist b64 ihn
+        	if(!msg[s].matches("["+B64+"]{43}=")){
+        		msg[s] = new String(Base64.encode(msg[s].getBytes()));
+        	}
         }
         //concat it in to one string
         String b64 = msg[0];
@@ -71,11 +75,11 @@ public class EncryptionHandler {
         String cipherb64 = new String(Base64.encode(cipher));
         return cipherb64;
     }
-    
+        
     public String[] debaseAllButFirst(String[] msg){
         int length = msg.length;
         for(int s = 1; s < length ; s++){
-                msg[s] = new String(Base64.decode(msg[s].getBytes()));
+                msg[s] = new String(Base64.decode(msg[s]));
         }
         
         return msg;
