@@ -34,7 +34,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class Manager {
     private static final boolean DEBUG = true;
-    private static final boolean LAB = true;
+    private static final boolean LAB = false;
     private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private static final String AESSPEC = "AES/CTR/NoPadding";
@@ -201,8 +201,6 @@ public class Manager {
                         
             String[] split = firstrsp.split(" ");
             if(split[0].contains("!ok")){
-            	//TODO this will not work due to encoding issues new with b64
-                //split = eh.debaseAllButFirst(split);
             }
             else{
                 System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");
@@ -224,7 +222,7 @@ public class Manager {
             //reinitialize eh
             eh = new EncryptionHandler(sks,AESSPEC, iv);
             
-            
+            //TODO send the right thing
             schedout.println(eh.encryptMessage(split[2]));
             schedout.flush();
             

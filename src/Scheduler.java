@@ -67,7 +67,7 @@ public class Scheduler extends AbstractServer {
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     private static final boolean DEBUG = true;
-    private static final boolean LAB = true;
+    private static final boolean LAB = false;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
         if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}
@@ -392,7 +392,6 @@ public class Scheduler extends AbstractServer {
             }
             
             String[] returnmsg ={"!ok", in[1], new String(Base64.encode(number)), new String(Base64.encode(key.getEncoded())), new String(Base64.encode(iv))};
-            System.out.println(returnmsg[4]);
             out.println(ceh.encryptMessage(returnmsg));
             out.flush();
             
@@ -421,7 +420,7 @@ public class Scheduler extends AbstractServer {
             String challengeb64 = ceh.decryptMessage(authentmsg);
             //FIXME this fails most of the time but I cant figure out why
             String challenge = ceh.debaseMassage(challengeb64);
-            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(challenge.getBytes())) != 0){
+            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(challenge))) != 0){
                 return false;
             }
             return true;

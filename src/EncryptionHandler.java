@@ -51,16 +51,8 @@ public class EncryptionHandler {
     }
     
     public String encryptMessage(String[] msg) throws IllegalBlockSizeException, BadPaddingException{
-        //base64 everything but the first part
         boolean first = true;
         
-        int length = msg.length;
-        for(int s = 1; s< length; s++){
-        	//wenn der string noch nicht b64 ist b64 ihn
-        	if(!msg[s].matches("["+B64+"]{43}=")){
-        		msg[s] = new String(Base64.encode(msg[s].getBytes()));
-        	}
-        }
         //concat it in to one string
         String b64 = msg[0];
         for(String s : msg){
