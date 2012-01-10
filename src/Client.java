@@ -20,7 +20,6 @@ import java.util.concurrent.*;
 import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.util.encoders.Hex;
 
-//TODO check exceptions
 public class Client implements Callbackable{
     
     private String mancomp;

@@ -171,7 +171,6 @@ public class Manager {
         //generate secrandom for challenge
         SecureRandom r = new SecureRandom();
         final byte[] number = new byte[32];
-        //TODO Test
         r.nextBytes(number);
         String[] firstmsg ={"!login", new String(Base64.encode(number))};
         String encrypted;
@@ -207,7 +206,6 @@ public class Manager {
                 return;
                 }
             
-            //if(!Arrays.equals(number,split[1].getBytes())){
             if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(split[1])))!=0){
                 System.out.println("Scheduler retuned wrong Challenge:\n is       : "+new String(Base64.decode(split[1]))+"\n should be: "+new String(number));
                 exitRoutineFail();
@@ -222,7 +220,6 @@ public class Manager {
             //reinitialize eh
             eh = new EncryptionHandler(sks,AESSPEC, iv);
             
-            //TODO send the right thing
             schedout.println(eh.encryptMessage(split[2]));
             schedout.flush();
             
@@ -297,7 +294,7 @@ public class Manager {
         
     }
     
-    private void readManager() throws FileNotFoundException{
+    private void readManager() throws NumberFormatException, FileNotFoundException{
         InputStream in = null;
         in = ClassLoader.getSystemResourceAsStream("manager.properties");
         if(in != null){
@@ -309,7 +306,6 @@ public class Manager {
                 for(String prop : manprops){
                     if(prop.contentEquals("scheduler.tcp.port")){
                         schedTP = Integer.parseInt(manpropfile.getProperty(prop));
-                        //TODO throw
                     }
                     if(prop.contentEquals("keys.dir")){
                         keydir = manpropfile.getProperty(prop);

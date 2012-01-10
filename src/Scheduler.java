@@ -137,7 +137,7 @@ public class Scheduler extends AbstractServer {
         }
     }
     
-    private void readProperties() throws FileNotFoundException{
+    private void readProperties() throws NumberFormatException, FileNotFoundException{
         InputStream in = null;
         in = ClassLoader.getSystemResourceAsStream("scheduler.properties");
         if(in != null){
@@ -148,7 +148,6 @@ public class Scheduler extends AbstractServer {
                 
                 for(String prop : shedprops){
                     if(prop.contentEquals("tcp.port")){
-                        //TODO throw
                         Tport = Integer.parseInt(schedpropfile.get(prop).toString());
                     }
                     if(prop.contentEquals("key.en")){
@@ -321,6 +320,12 @@ public class Scheduler extends AbstractServer {
                     target = new char[2048];
                     try {
                         output = processInput(input,Csock.getInetAddress().toString().substring(1));
+                        if(output.contentEquals("Invalid Auth.")){
+                            inreader.close();
+                            out.close();
+                            Csock.close();
+                            return;
+                        }
                         if (output != null) {
                             String encryptedoutput = ceh.encryptMessage(output);
                             out.println(encryptedoutput);
@@ -358,8 +363,7 @@ public class Scheduler extends AbstractServer {
                     return null;
                 }
                 else{
-                    //TODO maybe terminate connection or something to tell man that something is wrong
-                    return null;
+                    return "Invalid Auth.";
                 }
             }
             input = ceh.debaseMassage(input);
@@ -418,7 +422,6 @@ public class Scheduler extends AbstractServer {
             authentmsg = new String(target);
             authentmsg = authentmsg.trim();
             String challengeb64 = ceh.decryptMessage(authentmsg);
-            //FIXME this fails most of the time but I cant figure out why
             String challenge = ceh.debaseMassage(challengeb64);
             if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(challenge))) != 0){
                 return false;
