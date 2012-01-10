@@ -66,6 +66,7 @@ public class Scheduler extends AbstractServer {
     private ConcurrentHashMap<String,GTEntry> GTs = new ConcurrentHashMap<String,GTEntry>();
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
+    final String B64 = "a-zA-Z0-9/+";
     private static final boolean DEBUG = true;
     private static final boolean LAB = false;
     
@@ -358,7 +359,10 @@ public class Scheduler extends AbstractServer {
             
             String[] in = input.split(" ");
             if(in[0].contentEquals("!login")){
-                if(performLogin(in)){
+            	
+            	assert input.matches("!login ["+B64+"]{43}=") : "1st message";
+                // I personally think this juky
+            	if(performLogin(in)){
                     if(DEBUG){System.out.println("manager logged in successfully");}
                     return null;
                 }
@@ -423,6 +427,7 @@ public class Scheduler extends AbstractServer {
             authentmsg = authentmsg.trim();
             String challengeb64 = ceh.decryptMessage(authentmsg);
             String challenge = ceh.debaseMassage(challengeb64);
+            assert challenge.matches("["+B64+"]{43}=") : "3rd message";
             if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(challenge))) != 0){
                 return false;
             }

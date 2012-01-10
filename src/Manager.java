@@ -38,6 +38,7 @@ public class Manager {
     private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private static final String AESSPEC = "AES/CTR/NoPadding";
+    final String B64 = "a-zA-Z0-9/+";
     private String bindingName;
     private String schedHost;
     private String keydir;
@@ -188,7 +189,6 @@ public class Manager {
             System.out.println("Sorry something went wrong got an " +e1.toString()+" exception.");
             if(DEBUG){e1.printStackTrace();}
         }   
-
         
         //get response
         try {
@@ -200,6 +200,7 @@ public class Manager {
                         
             String[] split = firstrsp.split(" ");
             if(split[0].contains("!ok")){
+            	assert firstrsp.matches("!ok ["+B64+"]{43}= ["+B64+"]{43}= ["+B64+"]{43}= ["+B64+"]{22}==") : "2nd message";
             }
             else{
                 System.out.println("Sorry Scheduler responded with "+ split[0]+" should habe been !ok");
