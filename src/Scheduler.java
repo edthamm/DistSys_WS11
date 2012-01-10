@@ -320,7 +320,7 @@ public class Scheduler extends AbstractServer {
                     target = new char[2048];
                     try {
                         output = processInput(input,Csock.getInetAddress().toString().substring(1));
-                        if(output.contentEquals("Invalid Auth.")){
+                        if(output != null && output.contentEquals("Invalid Auth.")){
                             inreader.close();
                             out.close();
                             Csock.close();
