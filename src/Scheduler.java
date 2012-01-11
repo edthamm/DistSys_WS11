@@ -68,7 +68,7 @@ public class Scheduler extends AbstractServer {
     private Controller c = null;
     final String B64 = "a-zA-Z0-9/+";
     private static final boolean DEBUG = false;
-    private static final boolean LAB = true;
+    private static final boolean LAB = false;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
         if(!LAB){Security.insertProviderAt(new BouncyCastleProvider(), 1);}

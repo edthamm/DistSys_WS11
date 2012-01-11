@@ -34,7 +34,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class Manager {
     private static final boolean DEBUG = false;
-    private static final boolean LAB = true;
+    private static final boolean LAB = false;
     private static final String usage = "Usage: bindingName schedulerHost preparationCost [taskDir]";
     private static final String RSASPEC = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
     private static final String AESSPEC = "AES/CTR/NoPadding";
@@ -221,7 +221,7 @@ public class Manager {
             //reinitialize eh
             eh = new EncryptionHandler(sks,AESSPEC, iv);
             
-            schedout.println(eh.encryptMessage(new String(Base64.decode(split[2]))));
+            schedout.println(eh.encryptMessage(Base64.decode(split[2])));
             schedout.flush();
             
         } catch (IOException e) {

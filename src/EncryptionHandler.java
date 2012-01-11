@@ -42,6 +42,12 @@ public class EncryptionHandler {
         return cipherb64;
     }
     
+    public String encryptMessage(byte[] msg) throws IllegalBlockSizeException, BadPaddingException{
+        byte[] b64 = Base64.encode(msg);
+        byte[] cipher = enccipher.doFinal(b64);
+        String cipherb64 = new String(Base64.encode(cipher));
+        return cipherb64;
+    } 
     public String decryptMessage(String msg) throws IllegalBlockSizeException, BadPaddingException{
         byte[] cipher = Base64.decode(msg);
         byte[] clearbytes = deccipher.doFinal(cipher);
