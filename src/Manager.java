@@ -221,7 +221,7 @@ public class Manager {
             //reinitialize eh
             eh = new EncryptionHandler(sks,AESSPEC, iv);
             
-            schedout.println(eh.encryptMessage(split[2]));
+            schedout.println(eh.encryptMessage(new String(Base64.decode(split[2]))));
             schedout.flush();
             
         } catch (IOException e) {

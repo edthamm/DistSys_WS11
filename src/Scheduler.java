@@ -425,9 +425,8 @@ public class Scheduler extends AbstractServer {
             authentmsg = new String(target);
             authentmsg = authentmsg.trim();
             String challengeb64 = ceh.decryptMessage(authentmsg);
-            String challenge = ceh.debaseMassage(challengeb64);
-            assert challenge.matches("["+B64+"]{43}=") : "3rd message";
-            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(challenge))) != 0){
+            assert challengeb64.matches("["+B64+"]{43}=") : "3rd message";
+            if(ByteBuffer.wrap(number).compareTo(ByteBuffer.wrap(Base64.decode(challengeb64))) != 0){
                 return false;
             }
             return true;
