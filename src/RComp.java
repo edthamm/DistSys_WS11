@@ -257,6 +257,8 @@ public class RComp implements Companyable{
                                         "Sorry no engine available at the moment, please try again later.");
                             }
                         } catch (IOException e) {
+                            System.out.println("Connection to Scheduler went down. Please verify that the Scheduler is up and that Authentication was successful.\n"
+                                              +"The client was not informed about this and just got a regular error.");
                             if (DEBUG) {
                                 e.printStackTrace();
                             }
