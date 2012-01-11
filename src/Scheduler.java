@@ -67,7 +67,7 @@ public class Scheduler extends AbstractServer {
     private ExecutorService contE = Executors.newCachedThreadPool();
     private Controller c = null;
     final String B64 = "a-zA-Z0-9/+";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final boolean LAB = false;
     
     public Scheduler(int udpPort, int min, int max, int timeout, int checkPeriod){
@@ -361,9 +361,8 @@ public class Scheduler extends AbstractServer {
             if(in[0].contentEquals("!login")){
             	
             	assert input.matches("!login ["+B64+"]{43}=") : "1st message";
-                // I personally think this juky
             	if(performLogin(in)){
-                    if(DEBUG){System.out.println("manager logged in successfully");}
+                    System.out.println("manager logged in successfully");
                     return null;
                 }
                 else{
