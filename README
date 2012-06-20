@@ -1,0 +1,19 @@
+This is a project I had to complete for Distributed Systems at the 
+technical university in Vienna. 
+
+I got a B on the course (an A on the practical part you see here).
+
+I do not have the specs on my drive anymore so I can't provide them.
+But the basic idea was to provide a platform for distributed/cloudi-like
+computing.
+
+There is a manager that handles requests by companies/users and hands them
+down to task engines. They are turned on and off on demand, to be sort of
+energy efficient.
+
+There is a known bug with synchronisation. It effects the display and
+scheduling of task engines, precisely their turning on and of again.
+Cost me some points that.
+
+Different stages of handing it in for evaluation are denoted by the
+branches.
